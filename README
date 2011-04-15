@@ -23,7 +23,7 @@ CDN Servers are grouped in clusters, which are servers located in the same
 subnet, directly connected via LAN. CDN Servers also can be grouped in 
 regions, which allow to setup different distribution policies (by region).
 
-COMPONENTS
+COMPONENTS OF THE CDN MANAGEMENT SERVER
 
 The main components of the architecture, on the software side, are:
 
@@ -52,13 +52,16 @@ telling it that a new file just arrived and that it needs to be distributed.
 The cdnmanager checks the distribution policy associated with the file, and
 creates jobs for the cdnservers to do. 
 
-4) cdnserver
+4) ftpput
+
+A simple testing tool, just to send files for the ftpserver automatically.
+
+COMPONENTS OF THE CDN SERVER
+
+1) cdnserver
 
 This is the component in the server that talks to the message queue to 
 receive commands for file syncronization. It also collects statistics of the
 nginx server and sends to the central node.
 
-5) ftpput
-
-A simple testing tool, just to send files for the ftpserver automatically.
 

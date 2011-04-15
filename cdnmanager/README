@@ -1,0 +1,5 @@
+The cdnmanager server hosts the following components:
+
+1) cdnmanager - Django appplication
+2) ftpserver - receives the files sent by the publisher
+3) ftpput - test tool to send files automatically to the server
