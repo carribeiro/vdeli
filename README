@@ -1,0 +1,64 @@
+vdeli
+Video Deliver Network
+(c) 2011 INFTEC
+
+vdeli is a CDN (content delivery network) specialized in video delivery.
+The project is composed of several components that work together to allow
+a publisher to send a file, distribute this file in a controlled manner
+in a distributed network, and then allow end users to access and watch 
+movies.
+
+SERVERS
+
+The main elements of the architecture are:
+
+1) The Management Server, which is a central node for the system. It hosts
+   the cdnmanager and the ftpserver parts of the project.
+
+2) The CDN Servers, which hosts the files that the end user will access
+   to watch videos. There may be from one to a large number (over 4000) 
+   servers.
+
+CDN Servers are grouped in clusters, which are servers located in the same 
+subnet, directly connected via LAN. CDN Servers also can be grouped in 
+regions, which allow to setup different distribution policies (by region).
+
+COMPONENTS
+
+The main components of the architecture, on the software side, are:
+
+1) ftpserver
+
+This is a simple FTP server based on pyftpdlib, which is a great library
+that supports almost everything you need for a working FTP. It checks the 
+user authorization in a user library stored in a database, that is managed
+by the cdnmanager component (see it below).
+
+Publishers use this service to put new files into the network. These files
+will be copied to the servers under control of the cdnmanager application.
+
+2) cdnmanager
+
+It's a Django application which integrates with a message queue done using
+RabbitMQ. It can be used to create and manage users, servers, and video 
+files. It's also the frontend for statistics of the entire system.
+
+3) RabbitMQ
+
+The RabbitMQ server is a central component of the project. All the messages 
+between the servers pass through it. When a user uploads a new file, the 
+ftpserver component sends a message that is removed by the cdnmanager, 
+telling it that a new file just arrived and that it needs to be distributed.
+The cdnmanager checks the distribution policy associated with the file, and
+creates jobs for the cdnservers to do. 
+
+4) cdnserver
+
+This is the component in the server that talks to the message queue to 
+receive commands for file syncronization. It also collects statistics of the
+nginx server and sends to the central node.
+
+5) ftpput
+
+A simple testing tool, just to send files for the ftpserver automatically.
+
