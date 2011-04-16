@@ -1,0 +1,4 @@
+This is a simple FTP server based on pyftpdlib, which is a great library
+that supports almost everything you need for a working FTP. It checks the 
+user authorization in a user library stored in a database, that is managed
+by the cdnmanager component.
