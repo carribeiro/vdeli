@@ -1,1 +1,6 @@
 This is the cdnmanager django application.
+
+Fabric deploy script
+
+Bootstrap process:
+fab bootstrap:hosts="187.1.90.3"

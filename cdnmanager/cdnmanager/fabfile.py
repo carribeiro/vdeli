@@ -1,8 +1,8 @@
 import os
 from fabric.api import *
-from fabric.contrib.files import exist
+from fabric.contrib.files import exists
 
-
+env.user = 'vdeliadmin'
 
 def install_prerequirements():
     '''
@@ -12,6 +12,10 @@ def install_prerequirements():
         sudo('apt-get install python-virtualenv -y')
     if not exists('/usr/bin/pip',use_sudo=True):
         sudo('apt-get install python-pip -y')
+
+def mk_data_dir():
+    if not exists('/data',use_sudo=True):
+        sudo('mkdir /data')
 
 def create_virtual_env(virtual_env_path='/data',virtual_env_name='cdnmanager'):
     '''
@@ -45,3 +49,9 @@ def virtualenv(command,virtual_env_path='/data',virtual_env_name='cdnmanager',
             sudo(activate_env(project_name, env_name) + ' && ' + command)
         else:
             sudo(activate_env(project_name, env_name) + ' && ' + command, user=user)
+            
+
+
+def bootstrap():
+    install_prerequirements()
+    mk_data_dir()
