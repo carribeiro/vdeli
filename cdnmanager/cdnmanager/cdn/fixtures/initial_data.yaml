@@ -1,0 +1,9 @@
+- model: videorepo.VideoFile
+  pk: 1
+  fields:
+    file_hash = '3282aea35d1dfa412b2f9c934eec07784b4e3b77'
+    upload_date = '2011-04-05 02:33:56'
+    filename = 'video_files/CC-C-50BWF-B-06.09_view.pdf'
+    file_size = 174763
+
+    
