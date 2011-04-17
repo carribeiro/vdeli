@@ -1,1 +1,2 @@
 A simple testing tool, just to send files for the ftpserver automatically.
+ftpput uses the module ftputil, is a high level interface to the module ftplib.
