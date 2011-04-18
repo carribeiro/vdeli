@@ -2,7 +2,79 @@ import os
 from fabric.api import *
 from fabric.contrib.files import exists
 
-env.user = 'vdeliadmin'
+# globals
+env.prj_name = 'vdeli' # no spaces!
+env.use_photologue = False # django-photologue gallery module
+env.use_feincms = True
+env.use_medialibrary = True # feincms.medialibrary or similar
+env.use_daemontools = False
+env.use_supervisor = True
+env.use_celery = False
+env.webserver = 'nginx' # nginx or apache2 (directory name below /etc!)
+env.dbserver = 'mysql' # mysql or postgresql
+
+# environments
+
+def localhost():
+    "Use the local virtual server"
+    env.hosts = ['localhost']
+    env.user = 'vdeliadmin'
+    env.path = '/home/%(user)s/work/%(prj_name)s' % env
+    env.virtualhost_path = '%s/virtualenv/vdeli' % env.path
+    env.pysp = '%(virtualhost_path)s/lib/python2.6/site-packages' % env
+    env.tmppath = '/var/tmp/django_cache/%(prj_name)s' % env
+
+def cdnmanager():
+    "Use the actual webserver"
+    env.hosts = ['187.1.90.3'] # Change to your server name!
+    env.user = 'vdeliadmin'
+    env.path = '/srv/%(prj_name)s' % env
+    env.virtualhost_path = '%s/virtualenv/vdeli' % env.path
+    env.pysp = '%(virtualhost_path)s/lib/python2.6/site-packages' % env
+    env.tmppath = '/var/tmp/django_cache/%(prj_name)s' % env
+
+def setup():
+    """
+    Setup a fresh virtualenv as well as a few useful directories, then run
+    a full deployment
+
+    copied from: https://github.com/fiee/generic_django_project/blob/master/fabfile.py
+    """
+    require('hosts', provided_by=[localhost,cdnmanager])
+    require('path')
+    # install Python environment
+    sudo('apt-get install -y build-essential python-dev python-setuptools python-imaging python-virtualenv python-yaml')
+    # install some version control systems, since we need Django modules in development
+    sudo('apt-get install -y git-core') # subversion git-core mercurial
+        
+    # install more Python stuff
+    # Don't install setuptools or virtualenv on Ubuntu with easy_install or pip! Only Ubuntu packages work!
+    sudo('easy_install pip')
+
+    if env.use_daemontools:
+        sudo('apt-get install -y daemontools daemontools-run')
+        sudo('mkdir -p /etc/service/%(prj_name)s' % env, pty=True)
+    if env.use_supervisor:
+        sudo('pip install supervisor')
+        sudo('echo; if [ ! -f /etc/supervisord.conf ]; then echo_supervisord_conf > /etc/supervisord.conf; fi', pty=True) # configure that!
+        sudo('echo; if [ ! -d /etc/supervisor ]; then mkdir /etc/supervisor; fi', pty=True)
+    if env.use_celery:
+        sudo('apt-get install -y rabbitmq-server') # needs additional deb-repository!
+        if env.use_daemontools:
+            sudo('mkdir -p /etc/service/%(prj_name)s-celery' % env, pty=True)
+        # for supervisor, put celery's "program" block into supervisor.ini!
+    
+    # install webserver and database server
+    sudo('apt-get remove -y apache2 apache2-mpm-prefork apache2-utils') # is mostly pre-installed
+    if env.webserver=='nginx':
+        sudo('apt-get install -y nginx')
+    else:
+        sudo('apt-get install -y apache2-mpm-worker apache2-utils') # apache2-threaded
+        sudo('apt-get install -y libapache2-mod-wsgi') # outdated on hardy!
+    if env.dbserver=='mysql':
+        sudo('apt-get install -y mysql-server python-mysqldb')
+    elif env.dbserver=='postgresql':
+        sudo('apt-get install -y postgresql python-psycopg2')
 
 def install_prerequirements():
     '''
