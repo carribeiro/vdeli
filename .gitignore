@@ -1,2 +1,4 @@
 *.pyc
 *.db
+/cdnmanager/virtualenv/
+!/cdnmanager/virtualenv/README
