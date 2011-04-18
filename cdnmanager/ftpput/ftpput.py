@@ -56,9 +56,7 @@ def main(argv):
     provides support for parsing command line.
     
     return:
-        0 - upload completed.
-        1 - could not establish connection with server.
-        2 - video has not been sent.
+
     """
     try: 
         opts, args = getopt.getopt(argv, "h:s:u:p:l:t:a", ["help",
