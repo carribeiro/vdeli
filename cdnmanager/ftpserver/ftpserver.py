@@ -16,11 +16,17 @@ description:
     that supports almost everything you need for a working FTP. It checks the 
     user authorization in a user library stored in a database, that is managed
     by the cdnmanager component.
+    
+deploy:
+    
+    create a symlink to this file in /etc/init.d/,
+    do not forget set execute permissions for that symlink.
 """
 
 from pyftpdlib import ftpserver
 import sqlite3
 import pypid
+import authorizersqlite3
 
 ftpserver_daemon = pypid.Daemon()
 
