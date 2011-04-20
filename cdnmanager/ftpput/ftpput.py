@@ -15,15 +15,23 @@ description:
 import ftputil, os, sys, getopt
 
 def usage():
-    print '''usage: ftpput.py -s <hostname> -u <user> -p <passwd> -l <video-file> -t <target-dir> \n
+    """    
+    prints help message and explain details of the parameters.    
+    """
+    
+    try:
+        print '''usage: ftpput.py -s <hostname> -u <username> -p <passwd> -l <video-file> -t <target-dir> \n
 arguments:
         -s, --server      (hostname or ip address)
         -u, --user        (username)
         -p, --passwd      (password)
         -l, --video-file  (local video file)
         -t, --target-dir  (put video file in remote directory)
+        -a, --ascii       (change transfer mode to ascii (default = binary))
         
 Video Delivery Network <http://www.vdeli.com.br>'''
+    except:
+        return 0
 
 def put(hostname, username, passwd, local, target, mode):
     """    
@@ -34,7 +42,7 @@ def put(hostname, username, passwd, local, target, mode):
         1 - could not establish connection with server.
         2 - video has not been sent.
     """
-    
+
     try:
         ftp = ftputil.FTPHost(hostname, username, passwd) 
     except:
@@ -54,9 +62,6 @@ def put(hostname, username, passwd, local, target, mode):
 def main(argv):
     """    
     provides support for parsing command line.
-    
-    return:
-
     """
     try: 
         opts, args = getopt.getopt(argv, "h:s:u:p:l:t:a", ["help",
@@ -64,7 +69,8 @@ def main(argv):
                                                            "username",
                                                            "passwd",
                                                            "video-file",
-                                                           "target-dir"]
+                                                           "target-dir"
+                                                           ]
                                    )
     except getopt.GetoptError, error:
         print str(error)
@@ -76,7 +82,7 @@ def main(argv):
     
     for option, argument in opts:
         if option == "-a":
-            mode = "a"
+            mode = "a"         
         elif option in ("-h", "--help"):
             usage()
             sys.exit()
@@ -93,14 +99,18 @@ def main(argv):
         else:
             assert False, "unhandled option"
 
-    output = put(hostname, username, passwd, local, target, mode)
+    try:
+        putout = put(hostname, username, passwd, local, target, mode)
+    except:
+        usage()
+        sys.exit()
     
-    messages = ["upload completed.",
-                "could not establish connection with server.",
-                "video has not been sent."
-                ]
-    print messages[output]
+    putmsg = ["upload completed.",
+              "could not establish connection with server.",
+              "video has not been sent."
+              ]
 
+    print putmsg[putout]
 
 if __name__ == "__main__":
     main(sys.argv[1:])
