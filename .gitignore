@@ -4,3 +4,4 @@
 .pydevproject
 /cdnmanager/virtualenv/
 !/cdnmanager/virtualenv/README
+cdnmanager/cdnmanager/cdn/local_settings.py
