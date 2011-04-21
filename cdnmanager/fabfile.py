@@ -93,7 +93,6 @@ def deploy():
             sudo('virtualenv .env --no-site-packages',user=env.user)
         
         # install packages
-        
         with virtualenv():
             sudo('pip install -r %(project_path)s/requirements.txt' % env,user=env.user)
             sudo('pip install django-debug-toolbar' % env,user=env.user)
@@ -119,18 +118,6 @@ def deploy():
             sudo('virtualenv .env --no-site-packages',user=env.user)
         
         # install packages
-        requirements = open('requirements.txt', 'w')
-        requirements_data = """Django
-    South
-    django-extensions
-    pyftpdlib
-    psycopg2
-    """
-        requirements.write(requirements_data)
-        requirements.close()
-        
-        put('requirements.txt',env.project_path,use_sudo=True)
-        
         with virtualenv():
             sudo('pip install -r %(project_path)s/requirements.txt' % env,user=env.user)
 
