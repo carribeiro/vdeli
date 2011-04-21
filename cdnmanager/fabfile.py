@@ -4,39 +4,47 @@ from fabric.contrib.files import exists
 from contextlib import contextmanager as _contextmanager
 from fabric.contrib.project import rsync_project
 
+# constants
+
+DEFAULT_PATH_LOCALDEV = '/home/%(user)s/work'
+DEFAULT_PATH_SERVER = '/srv/'
+DEFAULT_HOST_LOCALDEV = 'localhost'
+DEFAULT_HOST_SERVER = '187.1.90.3'
+
 # globals
+
 env.prj_name = 'vdeli' # no spaces!
 env.webserver = 'apache2' # nginx or apache2 (directory name below /etc!)
 env.dbserver = 'postgresql' # mysql or postgresql
+env.user='vdeliadmin'
 
 # environments
+#
+# the project can be deployed on two kinds of environment: the localhost is 
+# for a local (development) deployment, and the cdnmanager is for a remote 
+# server deployment. In both cases, we always set up a single host at a time.
+# It does not make sense to deploy the cdnmanager on more than one host.
 
-def localhost(path='/home/%(user)s/PROJECTS' % env,user='vdeliadmin',\
-              createdb=True):
-    "Use the local virtual server"
-    env.hosts = ['localhost']
+def localhost(path=DEFAULT_PATH_LOCALDEV, user=env.user, 
+        host=DEFAULT_HOST_LOCALDEV, createdb=True):
+    """ Prepares the local computer, assuming a development setup """
+    env.hosts = [host] # always deploy to a single host
     env.user = user
-    env.path = path
+    env.path = path % env  # any attribute in env can be used. we must check 
+                           # whether this opens a security hole or not, 
+                           # depending on what is in the env dictionary
     env.project_path = '%(path)s/%(prj_name)s' % env
     env.virtualenv_path = '%(project_path)s/.env' % env
     env.activate = 'source %(virtualenv_path)s/bin/activate' % env
     env.createdb = createdb
 
-def cdnmanager(path='/srv',user='vdeliadmin',createdb=True):
-    "Use the actual webserver"
-    env.hosts = ['187.1.90.3'] # Change to your server name!
+def cdnmanager(path='/srv', user=env.user, host=DEFAULT_HOST_LOCALDEV, 
+        createdb=True):
+    """ Deploy to a dedicated webserver (can be staging or production) """
+    env.hosts = [host] # always deploy to a single host
     env.user = user
-    env.path = path
-    env.project_path = '%(path)s/%(prj_name)s' % env
-    env.virtualenv_path = '%(project_path)s/.env' % env
-    env.activate = 'source %(virtualenv_path)s/bin/activate' % env
-    env.createdb = createdb
-
-def test(path='/srv',user='vdeliadmin',createdb=True):
-    "Use the actual webserver"
-    env.hosts = ['10.7.1.5'] # Change to your server name!
-    env.user = user
-    env.path = path
+    env.path = path # do not perform path substitution on the server.
+                           # it's not really needed and it is safer this way.
     env.project_path = '%(path)s/%(prj_name)s' % env
     env.virtualenv_path = '%(project_path)s/.env' % env
     env.activate = 'source %(virtualenv_path)s/bin/activate' % env
