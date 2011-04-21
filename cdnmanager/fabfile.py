@@ -93,52 +93,12 @@ def deploy():
             sudo('virtualenv .env --no-site-packages',user=env.user)
         
         # install packages
-        requirements = open('requirements.txt', 'w')
-        requirements_data = """Django
-    South
-    django-extensions
-    pyftpdlib
-    psycopg2
-    """
-        requirements.write(requirements_data)
-        requirements.close()
-        
-        put('requirements.txt',env.project_path,use_sudo=True)
         
         with virtualenv():
             sudo('pip install -r %(project_path)s/requirements.txt' % env,user=env.user)
-        # setting up local_settings
-        local_settings = open('local_settings.py', 'w')
-        local_settings_data = """
-LOCAL_SETTINGS = True
-from settings import *
-DEBUG = True
-
-CACHE_BACKEND = 'dummy://'
-
-DATABASES = {
-    'default': {
-        'NAME': 'cdn',
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'USER': 'cdnmanager',
-        'PASSWORD': 'CdnManager',
-    },
-}
-
-
-import logging
-logging.basicConfig(filename=rel('log.txt'),
-                    level=logging.INFO,
-                    format='%(asctime)s %(name)-15s %(levelname)-8s %(message)s',
-                    datefmt='%Y-%m-%d %H:%M',)
-
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-"""
-        local_settings.write(requirements_data)
-        local_settings.close()
+            sudo('pip install django-debug-toolbar' % env,user=env.user)
         
-        put('local_settings.py','%(project_path)s/cdnmanager/cdnmanager/cdn/' % env,
-            use_sudo=True)
+        run('cp %(project_path)s/cdnmanager/local_settings.py %(project_path)s/cdnmanager/cdnmanager/cdn/' % env)
 
     # deploy on a remote system
     else:
