@@ -24,31 +24,40 @@ deploy:
 """
 
 from pyftpdlib import ftpserver
-import sqlite3
+import sqlite3, time
 import pypid
-import authorizersqlite3
+from authorizersqlite3 import SQLite3Authorizer
 
-ftpserver_daemon = pypid.Daemon()
+now = lambda: time.strftime("[%Y-%b-%d %H:%M:%S]")
+f1 = open('ftpd.log', 'a')
+f2 = open('ftpd.lines.log', 'a')
+f3 = open('ftpd.errlog', 'a')
+
+def standard_logger(msg):
+    f1.write("%s %s\n" %(now(), msg))
+    f1.flush()
+
+def line_logger(msg):
+    f2.write("%s %s\n" %(now(), msg))
+    f2.flush()
+
+def errlog(msg):
+    f3.write("%s %s\n" %(now(), msg))
+    f3.flush()
+
+def ftpserverd():
+    ftpserver.log = standard_logger
+    ftpserver.logline = line_logger
+    authorizer = SQLite3Authorizer()
+    handler = ftpserver.FTPHandler
+    handler.authorizer = authorizer
+    address = ('', 21)
+    server = ftpserver.FTPServer(address, handler)
+    server.serve_forever()
+    
 
 if __name__ == "__main__":
+    ftpserver_daemon = pypid.Daemon()
     ftpserver_daemon.args(stdout='/var/log/ftpserver.log', 
                           pidfile='/var/run/ftpserver.pid')
-    def ftpserverd():
-        authorizer = ftpserver.DummyAuthorizer()
-   
-        db = sqlite3.connect("/srv/git/vdeli/cdnmanager/ftpserver/ftpusers.db")
-        cur = db.cursor()
-        cur.execute('select * from users')
-        
-        for user in cur:
-            authorizer.add_user(user[0], user[1], \
-                                "/srv/git/vdeli/cdnmanager/ftpserver", perm="elradfmw")
-        
-        authorizer.add_anonymous("/")
-        handler = ftpserver.FTPHandler
-        handler.authorizer = authorizer
-        address = ("0.0.0.0", 21)
-        ftpd = ftpserver.FTPServer(address, handler)
-        ftpd.serve_forever()
-    
     ftpserverd()
