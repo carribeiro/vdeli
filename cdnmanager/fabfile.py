@@ -38,7 +38,7 @@ def localhost(path=DEFAULT_PATH_LOCALDEV, user=env.user,
     env.activate = 'source %(virtualenv_path)s/bin/activate' % env
     env.createdb = createdb
 
-def cdnmanager(path='/srv', user=env.user, host=DEFAULT_HOST_LOCALDEV, 
+def cdnmanager(path=DEFAULT_PATH_SERVER, user=env.user, host=DEFAULT_HOST_SERVER, 
         createdb=True):
     """ Deploy to a dedicated webserver (can be staging or production) """
     env.hosts = [host] # always deploy to a single host
