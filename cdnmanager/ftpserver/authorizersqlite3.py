@@ -82,7 +82,7 @@ class _Base(object):
             # re-set parameters
             del self._dummy_authorizer.user_table[username]
         self._dummy_authorizer.add_user(username, password or "",
-                                                  homedir or os.getcwd(),
+                                                  homedir or "",
                                                   perm or "",
                                                   msg_login or "",
                                                   msg_quit or "")
@@ -120,24 +120,23 @@ class _Base(object):
             return True
         return False
 
-
 # Note: requires python >= 2.5
 try:
-    import pwd, spwd, crypt
+    import pwd, spwd, crypt, sqlite3
 except ImportError:
     pass
 else:
-    __all__.extend(['BaseUnixAuthorizer', 'UnixAuthorizer'])
+    __all__.extend(['BaseSQLite3Authorizer', 'SQLite3Authorizer'])
 
     # the uid/gid the server runs under
     PROCESS_UID = os.getuid()
     PROCESS_GID = os.getgid()
 
-    class BaseUnixAuthorizer(object):
+    class BaseSQLite3Authorizer(object):
         """An authorizer compatible with Unix user account and password
         database.
         This class should not be used directly unless for subclassing.
-        Use higher-level UnixAuthorizer class instead.
+        Use higher-level SQLite3Authorizer class instead.
         """
 
         def __init__(self, anonymous_user=None):
@@ -148,11 +147,12 @@ else:
             if self.anonymous_user is not None:
                 if not self.anonymous_user in self._get_system_users():
                     raise ValueError('no such user %s' % self.anonymous_user)
-                try:
-                    return pwd.getpwnam(self.anonymous_user).pw_dir
-                except KeyError:
-                    raise ValueError('no such user %s' % username)
+#                try:
+#                    return pwd.getpwnam(self.anonymous_user).pw_dir
+#                except KeyError:
+#                    raise ValueError('no such user %s' % username)
 
+          
         # --- overridden / private API
 
         def validate_authentication(self, username, password):
@@ -162,30 +162,64 @@ else:
             if username == "anonymous":
                 return self.anonymous_user is not None
             try:
-                pw1 = spwd.getspnam(username).sp_pwd
-                pw2 = crypt.crypt(password, pw1)
+                db = sqlite3.connect("/srv/git/vdeli/cdnmanager/ftpserver/ftpusers.db")
+                pw1 = db.cursor()
+                pw1.execute('select password from users where username = "%s"' % (username))
+                pw2 = password
+                dbpw = list(pw1)[0]
             except KeyError:  # no such username
+                print "KeyError"
                 return False
             else:
-                return pw1 == pw2
+                return dbpw[0] == pw2
+            
+#        def validate_authentication(self, username, password):
+#            """Authenticates against shadow password db; return
+#            True on success.
+#            """
+#            if username == "anonymous":
+#                return self.anonymous_user is not None
+#            try:
+#                pw1 = spwd.getspnam(username).sp_pwd
+#                pw2 = crypt.crypt(password, pw1)
+#            except KeyError:  # no such username
+#                return False
+#            else:
+#                return pw1 == pw2
 
         @replace_anonymous
         def impersonate_user(self, username, password):
-            """Change process effective user/group ids to reflect
-            logged in user.
+            """Impersonate another user (noop).
+    
+            It is always called before accessing the filesystem.
+            By default it does nothing.  The subclass overriding this
+            method is expected to provide a mechanism to change the
+            current user.
             """
-            try:
-                pwdstruct = pwd.getpwnam(username)
-            except KeyError:
-                raise AuthorizerError('no such user %s' % username)
-            else:
-                os.setegid(pwdstruct.pw_gid)
-                os.seteuid(pwdstruct.pw_uid)
-
+#        def impersonate_user(self, username, password):
+#            """Change process effective user/group ids to reflect
+#            logged in user.
+#            """
+#            try:
+#                pwdstruct = pwd.getpwnam(username)
+#            except KeyError:
+#                raise AuthorizerError('no such user %s' % username)
+#            else:
+#                os.setegid(pwdstruct.pw_gid)
+#                os.seteuid(pwdstruct.pw_uid)
         def terminate_impersonation(self, username):
-            """Revert process effective user/group IDs."""
-            os.setegid(PROCESS_GID)
-            os.seteuid(PROCESS_UID)
+            """Terminate impersonation (noop).
+    
+            It is always called after having accessed the filesystem.
+            By default it does nothing.  The subclass overriding this
+            method is expected to provide a mechanism to switch back
+            to the original user.
+            """
+
+#        def terminate_impersonation(self, username):
+#            """Revert process effective user/group IDs."""
+#            os.setegid(PROCESS_GID)
+#            os.seteuid(PROCESS_UID)
 
         @replace_anonymous
         def has_user(self, username):
@@ -199,14 +233,24 @@ else:
         def get_home_dir(self, username):
             """Return user home directory."""
             try:
-                return pwd.getpwnam(username).pw_dir
+                #import pdb
+                #pdb.set_trace()
+                db = sqlite3.connect("/srv/git/vdeli/cdnmanager/ftpserver/ftpusers.db")
+                cursor = db.cursor()
+                cursor.execute('select homedir from users where username = "%s"' % (username))
+                homedir = list(cursor)[0]
+                return str(homedir[0])
             except KeyError:
                 raise AuthorizerError('no such user %s' % username)
 
         @staticmethod
         def _get_system_users():
-            """Return all users defined on the UNIX system."""
-            return [entry.pw_name for entry in pwd.getpwall()]
+            """Return all users defined on the SQLite3 Database."""
+            db = sqlite3.connect("/srv/git/vdeli/cdnmanager/ftpserver/ftpusers.db")
+            dbusers = db.cursor()
+            dbusers.execute('select username from users')
+            return [username for username in dbusers]
+                
 
         def get_msg_login(self, username):
             return "Login successful."
@@ -221,22 +265,22 @@ else:
             return perm in self.get_perms(username)
 
 
-    class UnixAuthorizer(_Base, BaseUnixAuthorizer):
-        """A wrapper on top of BaseUnixAuthorizer providing options
+    class SQLite3Authorizer(_Base, BaseSQLite3Authorizer):
+        """A wrapper on top of BaseSQLite3Authorizer providing options
         to specify what users should be allowed to login, per-user
         options, etc.
 
         Example usages:
 
-         >>> from pyftpdlib.contrib.authorizers import UnixAuthorizer
+         >>> from pyftpdlib.contrib.authorizers import SQLite3Authorizer
          >>> # accept all except root
-         >>> auth = UnixAuthorizer(rejected_users=["root"])
+         >>> auth = SQLite3Authorizer(rejected_users=["root"])
          >>>
          >>> # accept some users only
-         >>> auth = UnixAuthorizer(allowed_users=["matt", "jay"])
+         >>> auth = SQLite3Authorizer(allowed_users=["matt", "jay"])
          >>>
          >>> # accept everybody and don't care if they have not a valid shell
-         >>> auth = UnixAuthorizer(require_valid_shell=False)
+         >>> auth = SQLite3Authorizer(require_valid_shell=False)
          >>>
          >>> # set specific options for a user
          >>> auth.override_user("matt", password="foo", perm="elr")
@@ -286,7 +330,7 @@ else:
              - (string) msg_quit:
                 the string sent when client quits.
             """
-            BaseUnixAuthorizer.__init__(self, anonymous_user)
+            BaseSQLite3Authorizer.__init__(self, anonymous_user)
             self.global_perm = global_perm
             self.allowed_users = allowed_users
             self.rejected_users = rejected_users
@@ -330,7 +374,7 @@ else:
             if overridden_password:
                 return overridden_password == password
 
-            return BaseUnixAuthorizer.validate_authentication(self, username, password)
+            return BaseSQLite3Authorizer.validate_authentication(self, username, password)
 
         @replace_anonymous
         def has_user(self, username):
@@ -343,7 +387,7 @@ else:
             overridden_home = self._get_key(username, 'home')
             if overridden_home:
                 return overridden_home
-            return BaseUnixAuthorizer.get_home_dir(self, username)
+            return BaseSQLite3Authorizer.get_home_dir(self, username)
 
         @staticmethod
         def _has_valid_shell(username):
@@ -358,7 +402,11 @@ else:
                 raise
             else:
                 try:
-                    shell = pwd.getpwnam(username).pw_shell
+                    db = sqlite3.connect("/srv/git/vdeli/cdnmanager/ftpserver/ftpusers.db")
+                    dbusername = db.cursor()
+                    #shell = dbusername.execute('select shell from users where username = %s' % (username))
+                    shell = "/bin/bash"
+                    dbusername.close()
                     for line in file:
                         if line.startswith('#'):
                             continue
