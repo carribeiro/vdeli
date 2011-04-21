@@ -17,8 +17,10 @@ MANAGERS = ADMINS
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': 'cdn.db',  
+        'NAME': 'cdn',
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'USER': 'cdnmanager',
+        'PASSWORD': 'CdnManager',
     }
 }
 
