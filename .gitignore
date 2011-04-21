@@ -5,3 +5,5 @@
 /cdnmanager/virtualenv/
 !/cdnmanager/virtualenv/README
 cdnmanager/cdnmanager/cdn/local_settings.py
+cdnmanager/cdnmanager/cdn/log.txt
+requirements.txt
