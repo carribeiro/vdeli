@@ -28,25 +28,24 @@ from vdeliauthorizer import SQLite3Authorizer
 import sqlite3, time, pypid
 
 now = lambda: time.strftime("[%Y-%b-%d %H:%M:%S]")
-f1 = open('ftpd.log', 'a')
-f2 = open('ftpd.lines.log', 'a')
-f3 = open('ftpd.errlog', 'a')
+logs = open('/var/log/ftpserver.log', 'a')
 
 def standard_logger(msg):
-    f1.write("%s %s\n" %(now(), msg))
-    f1.flush()
+    logs.write("%s %s\n" %(now(), msg))
+    logs.flush()
 
 def line_logger(msg):
-    f2.write("%s %s\n" %(now(), msg))
-    f2.flush()
+    logs.write("%s %s\n" %(now(), msg))
+    logs.flush()
 
 def errlog(msg):
-    f3.write("%s %s\n" %(now(), msg))
-    f3.flush()
+    logs.write("%s %s\n" %(now(), msg))
+    logs.flush()
 
 def ftpserverd():
     ftpserver.log = standard_logger
     ftpserver.logline = line_logger
+    ftpserver.logerror = errlog
     authorizer = SQLite3Authorizer()
     handler = ftpserver.FTPHandler
     handler.authorizer = authorizer
