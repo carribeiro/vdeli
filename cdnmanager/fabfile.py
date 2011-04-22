@@ -113,6 +113,8 @@ def deploy():
         if not exists(env.path):
             sudo('mkdir %s' % env.path,user=env.user)
     
+        # checks the project locally (on the computer that's running fabric), checks the
+        # the repository locally, and then copy it via rsync.
         local('cd /tmp && git clone git@github.com:carribeiro/vdeli.git' % env)
         sudo('chown %(user)s:%(user)s %(path)s' % env)
         rsync_project(
@@ -129,3 +131,6 @@ def deploy():
         with virtualenv():
             sudo('pip install -r %(project_path)s/requirements.txt' % env,user=env.user)
 
+def configure_ftpserver():
+    """" Configure the ftpserver to run as a daemon """"
+    # TODO: create a symlink on /etc/init.d for the ftpserver daemon
