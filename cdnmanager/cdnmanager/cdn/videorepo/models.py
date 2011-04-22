@@ -16,6 +16,7 @@ class VideoFile(models.Model):
     upload_date = models.DateTimeField(_('upload date'))
     file_name = models.FileField(_('file name'), upload_to='video_files') #, db_column='file_name_str')
     file_size = models.IntegerField(_('file size'))
+    project = models.ForeignKey('VideoProject',null=True)
 
     def __str__(self):
         return "VideoFile %s (%d bytes)" % (self.file_name, self.file_size)
