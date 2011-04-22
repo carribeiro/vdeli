@@ -24,9 +24,8 @@ deploy:
 """
 
 from pyftpdlib import ftpserver
-import sqlite3, time
-import pypid
-from authorizersqlite3 import SQLite3Authorizer
+from vdeliauthorizer import SQLite3Authorizer
+import sqlite3, time, pypid
 
 now = lambda: time.strftime("[%Y-%b-%d %H:%M:%S]")
 f1 = open('ftpd.log', 'a')
