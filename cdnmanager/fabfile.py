@@ -64,6 +64,7 @@ def setup():
     Prepare server for the project
     """
 
+    sudo('apt-get update')
     sudo('apt-get install gcc python-all-dev libpq-dev git-core -y')
     
     if not exists('/usr/bin/virtualenv',use_sudo=True):
