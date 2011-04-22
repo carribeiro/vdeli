@@ -12,7 +12,7 @@ DEFAULT_USER_LOCALDEV = env.user
 
 DEFAULT_PATH_SERVER = '/srv/'
 DEFAULT_HOST_SERVER = '187.1.90.3'
-DEFAULT_USER_LOCALDEV = 'vdeliadmin'
+DEFAULT_USER_SERVER = 'vdeliadmin'
 
 # globals
 
