@@ -146,3 +146,4 @@ def deploy():
 def configure_ftpserver():
     """ Configure the ftpserver to run as a daemon """
     # TODO: create a symlink on /etc/init.d for the ftpserver daemon
+    sudo('ln -s %(project_path)s/ftpserver/ftpserver.py /etc/init.d/' % env,user=env.user)

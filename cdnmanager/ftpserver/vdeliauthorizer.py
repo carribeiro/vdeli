@@ -188,38 +188,39 @@ else:
 #                return pw1 == pw2
 
         @replace_anonymous
-        def impersonate_user(self, username, password):
-            """Impersonate another user (noop).
-    
-            It is always called before accessing the filesystem.
-            By default it does nothing.  The subclass overriding this
-            method is expected to provide a mechanism to change the
-            current user.
-            """
 #        def impersonate_user(self, username, password):
-#            """Change process effective user/group ids to reflect
-#            logged in user.
+#            """Impersonate another user (noop).
+#    
+#            It is always called before accessing the filesystem.
+#            By default it does nothing.  The subclass overriding this
+#            method is expected to provide a mechanism to change the
+#            current user.
 #            """
-#            try:
-#                pwdstruct = pwd.getpwnam(username)
-#            except KeyError:
-#                raise AuthorizerError('no such user %s' % username)
-#            else:
-#                os.setegid(pwdstruct.pw_gid)
-#                os.seteuid(pwdstruct.pw_uid)
-        def terminate_impersonation(self, username):
-            """Terminate impersonation (noop).
-    
-            It is always called after having accessed the filesystem.
-            By default it does nothing.  The subclass overriding this
-            method is expected to provide a mechanism to switch back
-            to the original user.
+        def impersonate_user(self, username, password):
+            """Change process effective user/group ids to reflect
+            logged in user.
             """
-
+            try:
+                pwdstruct = pwd.getpwnam("nobody")
+            except KeyError:
+                raise AuthorizerError('no such user %s' % pwdstruct)
+            else:
+                os.setegid(pwdstruct.pw_gid)
+                os.seteuid(pwdstruct.pw_uid)
+                
 #        def terminate_impersonation(self, username):
-#            """Revert process effective user/group IDs."""
-#            os.setegid(PROCESS_GID)
-#            os.seteuid(PROCESS_UID)
+#            """Terminate impersonation (noop).
+#    
+#            It is always called after having accessed the filesystem.
+#            By default it does nothing.  The subclass overriding this
+#            method is expected to provide a mechanism to switch back
+#            to the original user.
+#            """
+
+        def terminate_impersonation(self, username):
+            """Revert process effective user/group IDs."""
+            os.setegid(PROCESS_GID)
+            os.seteuid(PROCESS_UID)
 
         @replace_anonymous
         def has_user(self, username):
@@ -233,8 +234,6 @@ else:
         def get_home_dir(self, username):
             """Return user home directory."""
             try:
-                #import pdb
-                #pdb.set_trace()
                 db = sqlite3.connect("/srv/git/vdeli/cdnmanager/ftpserver/ftpusers.db")
                 cursor = db.cursor()
                 cursor.execute('select homedir from users where username = "%s"' % (username))
