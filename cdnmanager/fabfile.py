@@ -102,8 +102,11 @@ def deploy():
         # create project dir
         if not exists(env.path):
             sudo('mkdir %s' % env.path,user=env.user)
-    
-        local('cd %(path)s && git clone git@github.com:carribeiro/vdeli.git' % env)
+
+        if not exists(os.path.join(env.path, 'vdeli')):
+            local('cd %(path)s && git clone git@github.com:carribeiro/vdeli.git' % env)
+        else:
+            local('cd %(path)s && git pull')
         
         # create virtualenv
         with cd(env.project_path):
