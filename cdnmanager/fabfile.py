@@ -111,7 +111,7 @@ def deploy():
         
         # install packages
         with virtualenv():
-            sudo('pip install -r %(project_path)s/requirements.txt' % env,user=env.user)
+            sudo('pip install -r %(project_path)s/cdnmanager/requirements.txt' % env,user=env.user)
             sudo('pip install django-debug-toolbar' % env,user=env.user)
         
         run('cp %(project_path)s/cdnmanager/local_settings.py %(project_path)s/cdnmanager/cdnmanager/cdn/' % env)
