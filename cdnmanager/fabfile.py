@@ -106,7 +106,7 @@ def deploy():
         if not exists(os.path.join(env.path, 'vdeli')):
             local('cd %(path)s && git clone git@github.com:carribeiro/vdeli.git' % env)
         else:
-            local('cd %(path)s && git pull' % env)
+            local('cd %(path)s && cd vdeli && git pull' % env)
         
         # create virtualenv
         with cd(env.project_path):
