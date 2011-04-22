@@ -2,6 +2,8 @@
 
 from django.db import models
 from django.utils.translation import ugettext as _
+from django.contrib.auth.models import User
+
 
 # Create your models here.
 
@@ -62,3 +64,16 @@ class SegmentQueue(models.Model):
     # waiting, transferring, complete, suspendend, cancelled,
     segment_status = models.CharField(max_length=15)
     
+
+class VideoProject(models.Model):
+    name = models.CharField(max_length=30)
+    creation_date = models.DateTimeField()
+    user = models.ForeignKey(User)
+
+class ProjectPolicy(models.Model):
+    video_project = models.ForeignKey(VideoProject)
+    cdnregion = models.ForeignKey(CDNRegion)
+    protocol = models.CharField(max_length=5)
+    max_simultaneous_segments = models.IntegerField()
+    segment_size = models.IntegerField()
+    max_bandwidth_per_segment_mbps = models.IntegerField()
