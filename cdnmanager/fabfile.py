@@ -3,6 +3,7 @@ from fabric.api import *
 from fabric.contrib.files import exists
 from contextlib import contextmanager as _contextmanager
 from fabric.contrib.project import rsync_project
+from fabric.context_managers import settings
 
 # constants
 
@@ -88,8 +89,12 @@ def setup():
     if env.createdb:
         if not exists('/etc/postgresql',use_sudo=True):
             sudo('apt-get install -y postgresql')
-        sudo('psql -c "CREATE USER %s WITH NOCREATEDB NOCREATEUSER ENCRYPTED PASSWORD E\'%s\'"' % ('cdnmanager', 'CdnManager'), user='postgres')
-        sudo('psql -c "CREATE DATABASE %s WITH OWNER %s"' % (
+        # creates the db user and the database, but doesn't stop on failure, 
+        # because these may have been created before
+        # TODO: test if the user was created before, and if the db exists, instead of ignoring the error
+        with settings(warn_only=True):
+            sudo('psql -c "CREATE USER %s WITH NOCREATEDB NOCREATEUSER ENCRYPTED PASSWORD E\'%s\'"' % ('cdnmanager', 'CdnManager'), user='postgres')
+            sudo('psql -c "CREATE DATABASE %s WITH OWNER %s"' % (
             'cdn', 'cdnmanager'), user='postgres')
 
 def deploy():
