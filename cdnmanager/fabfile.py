@@ -7,9 +7,12 @@ from fabric.contrib.project import rsync_project
 # constants
 
 DEFAULT_PATH_LOCALDEV = '/home/%(user)s/work'
-DEFAULT_PATH_SERVER = '/srv/'
 DEFAULT_HOST_LOCALDEV = 'localhost'
+DEFAULT_USER_LOCALDEV = env.user
+
+DEFAULT_PATH_SERVER = '/srv/'
 DEFAULT_HOST_SERVER = '187.1.90.3'
+DEFAULT_USER_LOCALDEV = 'vdeliadmin'
 
 # globals
 
@@ -25,7 +28,7 @@ env.user='vdeliadmin'
 # server deployment. In both cases, we always set up a single host at a time.
 # It does not make sense to deploy the cdnmanager on more than one host.
 
-def localhost(path=DEFAULT_PATH_LOCALDEV, user=env.user, 
+def localhost(path=DEFAULT_PATH_LOCALDEV, user=DEFAULT_USER_LOCALDEV, 
         host=DEFAULT_HOST_LOCALDEV, createdb=True):
     """ Prepares the local computer, assuming a development setup """
     env.hosts = [host] # always deploy to a single host
@@ -38,7 +41,7 @@ def localhost(path=DEFAULT_PATH_LOCALDEV, user=env.user,
     env.activate = 'source %(virtualenv_path)s/bin/activate' % env
     env.createdb = createdb
 
-def cdnmanager(path=DEFAULT_PATH_SERVER, user=env.user, host=DEFAULT_HOST_SERVER, 
+def cdnmanager(path=DEFAULT_PATH_SERVER, user=DEFAULT_USER_SERVER, host=DEFAULT_HOST_SERVER, 
         createdb=True):
     """ Deploy to a dedicated webserver (can be staging or production) """
     env.hosts = [host] # always deploy to a single host
