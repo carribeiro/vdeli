@@ -21,6 +21,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'USER': 'cdnmanager',
         'PASSWORD': 'CdnManager',
+        'HOST': 'localhost',
     }
 }
 
