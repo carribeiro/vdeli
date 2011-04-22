@@ -4,6 +4,5 @@ PIL==1.1.7
 django-extensions==0.6
 gitosis==0.2
 simplejson==2.1.1
-pyaml
 pyftpdlib
 psycopg2
