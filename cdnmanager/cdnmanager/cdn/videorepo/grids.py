@@ -1,10 +1,12 @@
-from djangojqgrid import jqgrid
-from videorepo import VideoProject
+from djangojqgrid.jqgrid import JqGrid
+from django.core.urlresolvers import reverse
+from videorepo.models import VideoFile
+
 class ProjectGrid(JqGrid):
-    model = SomeFancyModel # could also be a queryset
-    fields = ['id', 'name', 'desc'] # optional 
+    model = VideoFile # could also be a queryset
+    fields = ['id','upload_date', 'file_name', 'file_hash', 'file_size'] # optional 
     url = reverse('grid_handler')
-    caption = 'My First Grid' # optional
+    caption = 'Video Projects Grid' # optional
     colmodel_overrides = {
         'id': { 'editable': False, 'width':10 },
     }
