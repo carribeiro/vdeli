@@ -78,6 +78,13 @@ class VideoProject(models.Model):
     def __str__(self):
         return "VideoProject %s" % (self.name, )
 
+TRANSFER_METHOD_CHOICES = (
+    ('Single HTTP', 'Single HTTP transfer'),
+    ('Single FTP', 'Single FTP transfer'),
+    ('Torrent-like', 'Fast HTTP with simultaneous connections'),
+    ('Trickle', 'Rate Controlled/Segmented FTP'),
+)
+
 class ProjectPolicy(models.Model):
     """
     Each policy defines how a video should be transferred, and to which
@@ -85,7 +92,13 @@ class ProjectPolicy(models.Model):
     """
     video_project = models.ForeignKey(VideoProject)
     cdnregion = models.ForeignKey(CDNRegion)
+    transfer_method = models.CharField(max_length=15,
+        choices=TRANSFER_METHOD_CHOICES, 
+        default='Single FTP')
     protocol = models.CharField(max_length=5)
     max_simultaneous_segments = models.IntegerField()
-    segment_size = models.IntegerField()
-    max_bandwidth_per_segment_mbps = models.IntegerField()
+    segment_size_kb = models.IntegerField(default=1000)
+    max_bandwidth_per_segment_kbps = models.IntegerField(default=1000)
+
+    class Meta:
+        verbose_name_plural = "project policies"
