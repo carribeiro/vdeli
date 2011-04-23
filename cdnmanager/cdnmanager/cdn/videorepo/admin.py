@@ -1,6 +1,7 @@
 #coding: utf-8
 
-from videorepo.models import VideoFile, CDNServer, CDNRegion, TransferQueue, SegmentQueue
+from videorepo.models import VideoFile, CDNServer, CDNRegion, TransferQueue
+from videorepo.models import SegmentQueue, VideoProject, ProjectPolicy
 from django.contrib import admin
 
 admin.site.register(VideoFile)

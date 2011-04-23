@@ -65,13 +65,21 @@ class SegmentQueue(models.Model):
     # waiting, transferring, complete, suspendend, cancelled,
     segment_status = models.CharField(max_length=15)
     
-
 class VideoProject(models.Model):
+    """
+    Each video is part of a project. The project has a name and and is 
+    associated with the user. A project has also one or more policies
+    that control file replication on the CDN servers.
+    """
     name = models.CharField(max_length=30)
     creation_date = models.DateTimeField()
     user = models.ForeignKey(User)
 
 class ProjectPolicy(models.Model):
+    """
+    Each policy defines how a video should be transferred, and to which
+    servers.
+    """
     video_project = models.ForeignKey(VideoProject)
     cdnregion = models.ForeignKey(CDNRegion)
     protocol = models.CharField(max_length=5)
