@@ -1,0 +1,6 @@
+TODO: find a better way to put this module in the project
+
+This module was added to the project because it's not available on PIP.
+It works but it's not the right way to do it. It should be fixed. Note
+that we added all the files, no only the code, to preserve the library
+as intact as possible.
