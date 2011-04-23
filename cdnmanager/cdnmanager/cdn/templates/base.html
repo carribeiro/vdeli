@@ -1,13 +1,24 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xml:lang="en" lang="en" xmlns="http://www.w3.org/1999/xhtml">
 <head>
+    {% block title %}
     <title>CDN Manager</title>
+    {% endblock %}
+    {% block css %}
+    {# Blueprint css framework. #}
+    <link rel="stylesheet" href="{{ STATIC_URL }}css/blueprint/screen.css" type="text/css" media="screen, projection">
+    <link rel="stylesheet" href="{{ STATIC_URL }}css/blueprint/print.css" type="text/css" media="print">    
+    <!--[if lt IE 8]><link rel="stylesheet" href="css/blueprint/ie.css" type="text/css" media="screen, projection"><![endif]-->
+    <link rel="stylesheet" href="{{ STATIC_URL }}css/vdeli.css" type="text/css">    
+    {% endblock css %}
+    {% block javascript %}
+    <script type="text/javascript"
+            src="{{ STATIC_URL }}js/jquery/jquery.js"></script>
+    {% endblock javascript %}
 </head>
 
 <body>
-
 {% block content %}
 {% endblock %}
-
 </body>
 
