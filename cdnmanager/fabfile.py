@@ -3,7 +3,7 @@ from fabric.api import *
 from fabric.contrib.files import exists
 from contextlib import contextmanager as _contextmanager
 from fabric.contrib.project import rsync_project
-from fabric.context_managers import settings
+from fabric.context_managers import settings, cd, prefix
 
 # constants
 
