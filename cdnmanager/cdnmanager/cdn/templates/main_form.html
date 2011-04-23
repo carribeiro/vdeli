@@ -1,0 +1,7 @@
+{% extends "baseapp.html" %}
+{% block baseapp %}
+<img src="{{ STATIC_URL }}images/vdn-small.png">
+<form enctype="multipart/form-data" method="post" action="/videorepo/">
+{{ main_form.as_p }}
+</form>
+{% endblock %}

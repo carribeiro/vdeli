@@ -20,6 +20,7 @@ urlpatterns = patterns('',
     
     (r'^accounts/login/$', 'django.contrib.auth.views.login'),
     (r'^accounts/logout/$', 'django.contrib.auth.views.logout'),
-    (r'^$', direct_to_template, {'template': 'index.html'}),
+    (r'^videorepo/$', 'videorepo.views.main'),
+    (r'^$', 'videorepo.views.main'),
     
 ) + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

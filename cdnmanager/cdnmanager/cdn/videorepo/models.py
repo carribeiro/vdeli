@@ -75,6 +75,9 @@ class VideoProject(models.Model):
     creation_date = models.DateTimeField()
     user = models.ForeignKey(User)
 
+    def __str__(self):
+        return "VideoProject %s" % (self.name, )
+
 class ProjectPolicy(models.Model):
     """
     Each policy defines how a video should be transferred, and to which

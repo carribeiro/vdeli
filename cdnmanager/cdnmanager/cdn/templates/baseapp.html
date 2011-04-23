@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div id="header" class="span-16">
+        <img src="{{ STATIC_URL }}images/vdn-small.png">
+        <span style="font-size: 2.8em; margin-bottom:12px; vertical-align: top;">
+        <b>Video Delivery Network</b>
+        </span>
+    </div>
+    <div id="header" class="span-8 last">
+        {% if request.user.is_authenticated %}
+            <div id="userinfo" style="text-align:right">
+                <a href="/accounts/{{ request.user.username }}">{{ request.user.username }}</a> |
+                <a href="/accounts/logout/">log out</a>
+            </div>
+        {% else %}
+            <div id="userinfo" style="text-align:right">
+                <a href="/accounts/login/">Log in</a>
+            </div>
+        {% endif %}
+    </div>
+    <hr>
+    <div id="main" class="span-24">
+    {% block baseapp %}
+    {% endblock %}
+    </div>
+
+</div>
+
+
+{% endblock %}
