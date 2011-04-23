@@ -57,5 +57,5 @@ def ftpserverd():
 if __name__ == "__main__":
     ftpserver_daemon = pypid.Daemon()
     ftpserver_daemon.args(stdout='/var/log/ftpserver.log', 
-                          pidfile='/var/run/ftpserver.pid')
+                          pidfile='/var/run/ftpserver/ftpserver.pid')
     ftpserverd()

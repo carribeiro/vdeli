@@ -140,8 +140,8 @@ else:
         """
 
         def __init__(self, anonymous_user=None):
-            if os.geteuid() != 0 or not spwd.getspall():
-                raise AuthorizerError("super user privileges are required")
+#            if os.geteuid() != 0 or not spwd.getspall():
+#                raise AuthorizerError("super user privileges are required")
             self.anonymous_user = anonymous_user
 
             if self.anonymous_user is not None:
