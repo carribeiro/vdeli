@@ -17,6 +17,9 @@ urlpatterns = patterns('',
 
     # Uncomment the next line to enable the admin:
     url(r'^admin/', include(admin.site.urls)),
+
+    # simple interface with the ftpserver
+    url(r'^ftpauth/(?P<username>\w+)/(?P<password>\w+)/$', 'videorepo.views.ftpauth' ),
     
     url(r'^projectgrid/$', 'videorepo.views.grid_handler' , name='grid_handler'),
     url(r'^projectgrid/cfg/$', 'videorepo.views.grid_config' , name='grid_config'),
@@ -26,7 +29,5 @@ urlpatterns = patterns('',
     url(r'^videorepo/$', 'videorepo.views.main'),
     url(r'^$', 'videorepo.views.main'),
     
-
-
 ) + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

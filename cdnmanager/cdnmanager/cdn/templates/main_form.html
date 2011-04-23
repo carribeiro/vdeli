@@ -6,7 +6,7 @@
 </form>
 
 
-
+{% comment %}
 <table>
 <thead>
 <th>Project</th>
@@ -25,10 +25,10 @@
 {% endfor %}
 </tbody>
 </table>
+{% endcomment %}
 
-
-<table id="mygrid">
-</table>
+<table id="mygrid"></table>
+<div id="pager"></div>
 
 <script type="text/javascript">
 $(document).ready(function () {
