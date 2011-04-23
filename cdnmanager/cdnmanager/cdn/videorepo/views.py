@@ -2,6 +2,7 @@
 from django.contrib.auth import authenticate, login
 from django.shortcuts import render_to_response, RequestContext
 from forms import MainForm
+from videorepo.models import VideoFile
 
 def user_login(request):
     if request.method == 'POST':
@@ -20,7 +21,10 @@ def main(request):
             return HttpResponseRedirect('') 
     else:
         main_form = MainForm() # An unbound form
+    
+    video_files = VideoFile.objects.all()
 
     return render_to_response('main_form.html', {
         'main_form': main_form,
+        'video_files': video_files,
     }, context_instance=RequestContext(request))

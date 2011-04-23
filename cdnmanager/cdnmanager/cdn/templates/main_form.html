@@ -4,4 +4,24 @@
 <form enctype="multipart/form-data" method="post" action="/videorepo/">
 {{ main_form.as_p }}
 </form>
+
+<table>
+<thead>
+<th>Project</th>
+<th>Video File</th>
+<th>Size</th>
+<th>Upload Date</th>
+</thead>
+<tbody>
+{% for v in video_files %}
+<tr>
+<td>{{ v.project }}</td>
+<td>{{ v.file_name }}</td>
+<td>{{ v.file_size }}</td>
+<td>{{ v.upload_date }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
 {% endblock %}
