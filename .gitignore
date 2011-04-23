@@ -1,8 +1,9 @@
 *.pyc
 *.db
+*.sublime-project
+.env
 .project
 .pydevproject
-.sublime-project
 /cdnmanager/virtualenv/
 !/cdnmanager/virtualenv/README
 cdnmanager/cdnmanager/cdn/local_settings.py
