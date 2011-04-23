@@ -191,14 +191,6 @@ else:
 #                return pw1 == pw2
 
         @replace_anonymous
-#        def impersonate_user(self, username, password):
-#            """Impersonate another user (noop).
-#    
-#            It is always called before accessing the filesystem.
-#            By default it does nothing.  The subclass overriding this
-#            method is expected to provide a mechanism to change the
-#            current user.
-#            """
         def impersonate_user(self, username, password):
             """Change process effective user/group ids to reflect
             logged in user.
@@ -211,15 +203,6 @@ else:
                 os.setegid(pwdstruct.pw_gid)
                 os.seteuid(pwdstruct.pw_uid)
                 
-#        def terminate_impersonation(self, username):
-#            """Terminate impersonation (noop).
-#    
-#            It is always called after having accessed the filesystem.
-#            By default it does nothing.  The subclass overriding this
-#            method is expected to provide a mechanism to switch back
-#            to the original user.
-#            """
-
         def terminate_impersonation(self, username):
             """Revert process effective user/group IDs."""
             os.setegid(PROCESS_GID)
@@ -245,15 +228,6 @@ else:
                 return str(homedir[0])
             except KeyError:
                 raise AuthorizerError('no such user %s' % username)
-
-        # @staticmethod
-        # def _get_system_users():
-        #     """Return all users defined on the SQLite3 Database."""
-        #     db = sqlite3.connect("/srv/git/vdeli/cdnmanager/ftpserver/ftpusers.db")
-        #     dbusers = db.cursor()
-        #     dbusers.execute('select username from users')
-        #     return [username for username in dbusers]
-                
 
         def get_msg_login(self, username):
             return "Login successful."
