@@ -34,8 +34,8 @@ from django.core.paginator import Paginator, InvalidPage
 from django.utils import simplejson as json
 from django.utils.encoding import smart_str
 from django.http import Http404
-from util.json import json_encode
-
+import simplejson as json
+from datetime import datetime
 
 class JqGrid(object):
     queryset = None
@@ -186,10 +186,24 @@ class JqGrid(object):
 
     def get_json(self, request):
         paginator, page, items = self.get_items(request)
-        return json_encode({
+        #Code to replace datetime as string by Adam Awan 23/04/11
+        cleaned_items = []
+        for index, item in enumerate(items):
+            #rowid = 0
+            for key, subitem in item.iteritems():
+                if type(subitem) == type(datetime.now()):
+                    items[index][key] = subitem.isoformat()
+                elif key == "id":
+                    rowid = str(subitem)
+                items[index][key] = unicode(subitem)
+            cleaned_items.append({'id':rowid,
+                        'cell':[val for key,val in item.iteritems() if key != 'id']})
+        #cleaned_items = [{"cell": ["2011-04-23T11:29:29.804178","Test File","agshj","100"], "id": "1"}, {"cell": ["2011-04-23T13:00:03.263326","abcdefg1234567", "Test File", "01982"], "id": "2"}]
+
+        return json.dumps({
             'page': page.number,
             'total': paginator.num_pages,
-            'rows': items,
+            'rows': cleaned_items,
             'records': paginator.count
         })
 
@@ -235,7 +249,7 @@ class JqGrid(object):
             'colModel': self.get_colmodels(),
         })
         if as_json:
-            config = json_encode(config)
+            config = json.dumps(config)
         return config
     
     def lookup_foreign_key_field(self, options, field_name):
