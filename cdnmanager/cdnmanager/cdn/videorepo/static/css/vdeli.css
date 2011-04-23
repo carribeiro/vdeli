@@ -1,0 +1,8 @@
+#userinfo ul {
+    margin: 0;
+    padding: 0;
+    list-style-type: none; 
+}
+
+#userinfo ul li { display: inline; }
+#userinfo ul li a { text-decoration: none; padding: .2em 1em; }
