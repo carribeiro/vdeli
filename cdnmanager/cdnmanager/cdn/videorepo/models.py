@@ -21,6 +21,25 @@ class VideoFile(models.Model):
     def __str__(self):
         return "VideoFile %s (%d bytes)" % (self.file_name, self.file_size)
 
+class SummaryLog(models.Model):
+    """
+    This model stores 5 minute interval samples with the number of videos
+    being requested and other data. The table is generated from a long 
+    running process that takes log files from the servers and summarize
+    the data per interval.
+
+    To make things easier, the start_time is recorded as a integer, as
+    'seconds since epoch' format. This format makes it easier to write
+    queries that summarize the data per hour or day, as it is just a 
+    matter of selecting a integer interval (ex: one hour = 12 samples).
+    """
+    video_file = models.ForeignKey('VideoFile')
+    start_time = models.IntegerField()
+    new_requests = models.IntegerField()
+    concurrent_requests = models.IntegerField()
+    total_transfer_mb = models.IntegerField()
+    # interrupted_transfers = models.IntegerField()  # check if we have this info
+
 class CDNServer(models.Model):
     """
     Represents a single CDN server.
