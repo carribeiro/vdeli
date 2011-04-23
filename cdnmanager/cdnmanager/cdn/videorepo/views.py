@@ -1,6 +1,6 @@
 # Create your views here.
 from django.contrib.auth import authenticate, login
-from django.shortcuts import render_to_response
+from django.shortcuts import render_to_response, RequestContext
 from forms import MainForm
 
 def user_login(request):
@@ -23,4 +23,4 @@ def main(request):
 
     return render_to_response('main_form.html', {
         'main_form': main_form,
-    })
+    }, context_instance=RequestContext(request))
