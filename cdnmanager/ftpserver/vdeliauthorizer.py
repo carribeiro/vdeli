@@ -11,7 +11,7 @@ class for:
 - changing user when accessing the filesystem
 
 This module contains two classes which implements such functionalities
-in a system-specific way for both SQLite3 and PostgreSQL.
+in a system-specific way for both SQLite3 and Django.
 """
 
 __all__ = []
@@ -36,7 +36,7 @@ def replace_anonymous(callable):
 
 
 class _Base(object):
-    """Methods common to both SQLite3 and Postgres authorizers.
+    """Methods common to both SQLite3 and Django authorizers.
     Not supposed to be used directly.
     """
 
@@ -46,12 +46,12 @@ class _Base(object):
             raise ValueError("rejected_users and allowed_users options are "
                              "mutually exclusive")
 
-        users = self._get_system_users()
-        for user in (self.allowed_users or self.rejected_users):
-            if user == 'anonymous':
-                raise ValueError('invalid username "anonymous"')
-            if user not in users:
-                raise ValueError('unknown user %s' % user)
+        # users = self._get_system_users()
+        # for user in (self.allowed_users or self.rejected_users):
+        #     if user == 'anonymous':
+        #         raise ValueError('invalid username "anonymous"')
+        #     if user not in users:
+        #         raise ValueError('unknown user %s' % user)
 
         if self.anonymous_user is not None:
             if not self.has_user(self.anonymous_user):
@@ -135,7 +135,6 @@ else:
     PROCESS_UID = os.getuid()
     PROCESS_GID = os.getgid()
 
-    @sqlite3_authorizer
     class BaseSQLite3Authorizer(object):
         """An authorizer compatible with Unix user account and password
         database.
@@ -148,9 +147,9 @@ else:
 #                raise AuthorizerError("super user privileges are required")
             self.anonymous_user = anonymous_user
 
-            if self.anonymous_user is not None:
-                if not self.anonymous_user in self._get_system_users():
-                    raise ValueError('no such user %s' % self.anonymous_user)
+            # if self.anonymous_user is not None:
+            #     if not self.anonymous_user in self._get_system_users():
+            #         raise ValueError('no such user %s' % self.anonymous_user)
 #                try:
 #                    return pwd.getpwnam(self.anonymous_user).pw_dir
 #                except KeyError:
@@ -227,12 +226,13 @@ else:
             os.seteuid(PROCESS_UID)
 
         @replace_anonymous
-        def has_user(self, username):
+        def has_user(self, username, password):
             """Return True if user exists on the Unix system.
             If the user has been black listed via allowed_users or
             rejected_users options always return False.
             """
-            return username in self._get_system_users()
+            if self.BaseSQLite3Authorizer.validate_authentication(self, username, password):
+                return username
 
         @replace_anonymous
         def get_home_dir(self, username):
@@ -246,13 +246,13 @@ else:
             except KeyError:
                 raise AuthorizerError('no such user %s' % username)
 
-        @staticmethod
-        def _get_system_users():
-            """Return all users defined on the SQLite3 Database."""
-            db = sqlite3.connect("/srv/git/vdeli/cdnmanager/ftpserver/ftpusers.db")
-            dbusers = db.cursor()
-            dbusers.execute('select username from users')
-            return [username for username in dbusers]
+        # @staticmethod
+        # def _get_system_users():
+        #     """Return all users defined on the SQLite3 Database."""
+        #     db = sqlite3.connect("/srv/git/vdeli/cdnmanager/ftpserver/ftpusers.db")
+        #     dbusers = db.cursor()
+        #     dbusers.execute('select username from users')
+        #     return [username for username in dbusers]
                 
 
         def get_msg_login(self, username):
@@ -380,10 +380,9 @@ else:
             return BaseSQLite3Authorizer.validate_authentication(self, username, password)
 
         @replace_anonymous
-        def has_user(self, username):
-            if self._is_rejected_user(username):
-                return False
-            return username in self._get_system_users()
+        def has_user(self, username, password):
+            if BaseSQLite3Authorizer.validate_authentication(self, username, password):
+                return username
 
         @replace_anonymous
         def get_home_dir(self, username):
@@ -420,7 +419,6 @@ else:
                 finally:
                     file.close()
 
-    @postgresql_authorizer
     class BaseDjangoAuthorizer(object):
         """An authorizer compatible with Unix user account and password
         database.
@@ -531,13 +529,13 @@ else:
             except KeyError:
                 raise AuthorizerError('no such user %s' % username)
 
-        @staticmethod
-        def _get_system_users():
-            """Return all users defined on the SQLite3 Database."""
-            db = sqlite3.connect("/srv/git/vdeli/cdnmanager/ftpserver/ftpusers.db")
-            dbusers = db.cursor()
-            dbusers.execute('select username from users')
-            return [username for username in dbusers]
+        # @staticmethod
+        # def _get_system_users():
+        #     """Return all users defined on the SQLite3 Database."""
+        #     db = sqlite3.connect("/srv/git/vdeli/cdnmanager/ftpserver/ftpusers.db")
+        #     dbusers = db.cursor()
+        #     dbusers.execute('select username from users')
+        #     return [username for username in dbusers]
                 
 
         def get_msg_login(self, username):
