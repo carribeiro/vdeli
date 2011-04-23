@@ -26,36 +26,47 @@ deploy:
 from pyftpdlib import ftpserver
 from vdeliauthorizer import SQLite3Authorizer
 import sqlite3, time, pypid
+import sys
 
 now = lambda: time.strftime("[%Y-%b-%d %H:%M:%S]")
-logs = open('/var/log/ftpserver.log', 'a')
 
-def standard_logger(msg):
-    logs.write("%s %s\n" %(now(), msg))
-    logs.flush()
+class FTPServer:
 
-def line_logger(msg):
-    logs.write("%s %s\n" %(now(), msg))
-    logs.flush()
+    def __init__(self, log_name='/var/log/ftpserver.log'):
+        if log_name == '':
+            self.log = sys.stdout
+        else:
+            self.log = open(log_name, 'a')
 
-def errlog(msg):
-    logs.write("%s %s\n" %(now(), msg))
-    logs.flush()
+    def standard_logger(self, msg):
+        self.log.write("%s %s\n" %(now(), msg))
+        self.log.flush()
 
-def ftpserverd():
-    ftpserver.log = standard_logger
-    ftpserver.logline = line_logger
-    ftpserver.logerror = errlog
-    authorizer = SQLite3Authorizer()
-    handler = ftpserver.FTPHandler
-    handler.authorizer = authorizer
-    address = ('', 21)
-    server = ftpserver.FTPServer(address, handler)
-    server.serve_forever()
+    def line_logger(self, msg):
+        self.log.write("%s %s\n" %(now(), msg))
+        self.log.flush()
+
+    def error_loggger(self, msg):
+        self.log.write("%s %s\n" %(now(), msg))
+        self.log.flush()
+
+    def ftpserverd(self):
+        ftpserver.log = self.standard_logger
+        ftpserver.logline = self.line_logger
+        ftpserver.logerror = self.error_loggger
+        authorizer = SQLite3Authorizer()
+        handler = ftpserver.FTPHandler
+        handler.authorizer = authorizer
+        address = ('', 21)
+        server = ftpserver.FTPServer(address, handler)
+        server.serve_forever()
     
 
 if __name__ == "__main__":
-    ftpserver_daemon = pypid.Daemon()
-    ftpserver_daemon.args(stdout='/var/log/ftpserver.log', 
-                          pidfile='/var/run/ftpserver/ftpserver.pid')
-    ftpserverd()
+    if "--debug" in sys.argv:
+        FTPServer(log_name='').ftpserverd()
+    else:
+        ftpserver_daemon = pypid.Daemon()
+        ftpserver_daemon.args(stdout='/var/log/ftpserver.log', 
+                              pidfile='/var/run/ftpserver/ftpserver.pid')
+        FTPServer().ftpserverd()
