@@ -25,9 +25,14 @@ def grid_config(request):
     return HttpResponse(grid.get_config(), mimetype="application/json")
 
 def ftpauth(request, username, password):
+    """
+    Simple JSON interface to test the user/password combination. To be used 
+    with the FTP server. Note that passwords are sent in the clear, but that's
+    also true for plain FTP.
+    """
     from django.contrib.auth import authenticate
     import simplejson as json
-    if 'application/json' in request.META.get('HTTP_ACCEPT'):
+    if True or ('application/json' in request.META.get('HTTP_ACCEPT')): # will ignore the header for now
         user = authenticate(username=username, password=password)
         if user:
             return HttpResponse(json.dumps({'status':'ok', 'username':user.username, }),
@@ -36,7 +41,6 @@ def ftpauth(request, username, password):
             return HttpResponseBadRequest(json.dumps({'status':'User/password combination do not match', 
                     'username':'', }), mimetype='application/json')
     else:
-        #print "Erro2", username
         return HttpResponseBadRequest(json.dumps({'status':'Must be called as a JSON method', 
                 'username':'', }), mimetype='application/json')
 
