@@ -491,11 +491,8 @@ else:
         def get_home_dir(self, username):
             """Return user home directory."""
             try:
-                db = sqlite3.connect("/srv/git/vdeli/cdnmanager/ftpserver/ftpusers.db")
-                cursor = db.cursor()
-                cursor.execute('select homedir from users where username = "%s"' % (username))
-                homedir = list(cursor)[0]
-                return str(homedir[0])
+                homedir = ('/home/%s/' % (username))
+                return homedir
             except KeyError:
                 raise AuthorizerError('no such user %s' % username)
 
