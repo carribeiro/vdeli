@@ -70,5 +70,5 @@ if __name__ == "__main__":
     else:
         ftpserver_daemon = pypid.Daemon()
         ftpserver_daemon.args(stdout='/var/log/ftpserver.log', 
-                              pidfile='/var/run/ftpserver/ftpserver.pid')
+                              pidfile='/var/run/ftpserver.pid')
         FTPServer().ftpserverd()
