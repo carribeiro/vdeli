@@ -1,6 +1,6 @@
 #!/bin/bash
-ENV="/home/chacara/work/vdeli/"
-source $ENV/.env/bin/activate
+VDELIHOME="_VDELIHOME_"
+source $VDELIHOME/.env/bin/activate
 
 case "$1" in
 	start)

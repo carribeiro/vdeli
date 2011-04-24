@@ -1,0 +1,18 @@
+The local_scripts folder holds base copies from scripts that are meant
+to be customized at each location. These scripts are copied by the 
+fabfile deployment tool to the correct location, usually with some 
+customization (path substitution, username substitution, etc.).
+
+The copies in this folder are the base files, and are stored with the 
+repository. They are ignored in their locations for development or
+production:
+
+local_settings.py    included in the Django settings file. Should be
+                     copied to the $VDELIHOME/cdnmanager/cdnmanager/cdn
+                     directory (where the settings.py file is). 
+                     Localization: directories and username.
+
+ftpserver            Bash script, takes care of setting the correct 
+                     environment for the ftpserver.py script to run
+                     under sudo. Copied to $VDELIHOME/ftpserver dir.
+                     Localization: directory.
