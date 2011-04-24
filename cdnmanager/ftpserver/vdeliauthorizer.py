@@ -11,7 +11,7 @@ class for:
 - changing user when accessing the filesystem
 
 This module contains two classes which implements such functionalities
-in a system-specific way for both Unix and Windows.
+in a system-specific way for both SQLite3 and Django.
 """
 
 __all__ = []
@@ -36,7 +36,7 @@ def replace_anonymous(callable):
 
 
 class _Base(object):
-    """Methods common to both Unix and Windows authorizers.
+    """Methods common to both SQLite3 and Django authorizers.
     Not supposed to be used directly.
     """
 
@@ -46,12 +46,12 @@ class _Base(object):
             raise ValueError("rejected_users and allowed_users options are "
                              "mutually exclusive")
 
-        users = self._get_system_users()
-        for user in (self.allowed_users or self.rejected_users):
-            if user == 'anonymous':
-                raise ValueError('invalid username "anonymous"')
-            if user not in users:
-                raise ValueError('unknown user %s' % user)
+        # users = self._get_system_users()
+        # for user in (self.allowed_users or self.rejected_users):
+        #     if user == 'anonymous':
+        #         raise ValueError('invalid username "anonymous"')
+        #     if user not in users:
+        #         raise ValueError('unknown user %s' % user)
 
         if self.anonymous_user is not None:
             if not self.has_user(self.anonymous_user):
@@ -120,13 +120,16 @@ class _Base(object):
             return True
         return False
 
-# Note: requires python >= 2.5
+
 try:
-    import pwd, spwd, crypt, sqlite3
+    import pwd, spwd, sqlite3, httplib, urllib
 except ImportError:
     pass
 else:
-    __all__.extend(['BaseSQLite3Authorizer', 'SQLite3Authorizer'])
+    __all__.extend(['BaseSQLite3Authorizer', 
+                    'SQLite3Authorizer', 
+                    'BaseDjangoAuthorizer', 
+                    'DjangoAuthorizer'])
 
     # the uid/gid the server runs under
     PROCESS_UID = os.getuid()
@@ -144,9 +147,9 @@ else:
 #                raise AuthorizerError("super user privileges are required")
             self.anonymous_user = anonymous_user
 
-            if self.anonymous_user is not None:
-                if not self.anonymous_user in self._get_system_users():
-                    raise ValueError('no such user %s' % self.anonymous_user)
+            # if self.anonymous_user is not None:
+            #     if not self.anonymous_user in self._get_system_users():
+            #         raise ValueError('no such user %s' % self.anonymous_user)
 #                try:
 #                    return pwd.getpwnam(self.anonymous_user).pw_dir
 #                except KeyError:
@@ -188,14 +191,6 @@ else:
 #                return pw1 == pw2
 
         @replace_anonymous
-#        def impersonate_user(self, username, password):
-#            """Impersonate another user (noop).
-#    
-#            It is always called before accessing the filesystem.
-#            By default it does nothing.  The subclass overriding this
-#            method is expected to provide a mechanism to change the
-#            current user.
-#            """
         def impersonate_user(self, username, password):
             """Change process effective user/group ids to reflect
             logged in user.
@@ -208,27 +203,19 @@ else:
                 os.setegid(pwdstruct.pw_gid)
                 os.seteuid(pwdstruct.pw_uid)
                 
-#        def terminate_impersonation(self, username):
-#            """Terminate impersonation (noop).
-#    
-#            It is always called after having accessed the filesystem.
-#            By default it does nothing.  The subclass overriding this
-#            method is expected to provide a mechanism to switch back
-#            to the original user.
-#            """
-
         def terminate_impersonation(self, username):
             """Revert process effective user/group IDs."""
             os.setegid(PROCESS_GID)
             os.seteuid(PROCESS_UID)
 
         @replace_anonymous
-        def has_user(self, username):
+        def has_user(self, username, password):
             """Return True if user exists on the Unix system.
             If the user has been black listed via allowed_users or
             rejected_users options always return False.
             """
-            return username in self._get_system_users()
+            if self.BaseSQLite3Authorizer.validate_authentication(self, username, password):
+                return username
 
         @replace_anonymous
         def get_home_dir(self, username):
@@ -241,15 +228,6 @@ else:
                 return str(homedir[0])
             except KeyError:
                 raise AuthorizerError('no such user %s' % username)
-
-        @staticmethod
-        def _get_system_users():
-            """Return all users defined on the SQLite3 Database."""
-            db = sqlite3.connect("/srv/git/vdeli/cdnmanager/ftpserver/ftpusers.db")
-            dbusers = db.cursor()
-            dbusers.execute('select username from users')
-            return [username for username in dbusers]
-                
 
         def get_msg_login(self, username):
             return "Login successful."
@@ -376,10 +354,9 @@ else:
             return BaseSQLite3Authorizer.validate_authentication(self, username, password)
 
         @replace_anonymous
-        def has_user(self, username):
-            if self._is_rejected_user(username):
-                return False
-            return username in self._get_system_users()
+        def has_user(self, username, password):
+            if BaseSQLite3Authorizer.validate_authentication(self, username, password):
+                return username
 
         @replace_anonymous
         def get_home_dir(self, username):
@@ -406,6 +383,269 @@ else:
                     #shell = dbusername.execute('select shell from users where username = %s' % (username))
                     shell = "/bin/bash"
                     dbusername.close()
+                    for line in file:
+                        if line.startswith('#'):
+                            continue
+                        line = line.strip()
+                        if line == shell:
+                            return True
+                    return False
+                finally:
+                    file.close()
+
+    class BaseDjangoAuthorizer(object):
+        """ An authorizer compatible with Unix user account and password
+        database.
+        This class should not be used directly unless for subclassing.
+        Use higher-level DjangoAuthorizer class instead.
+        """
+
+        def __init__(self, anonymous_user=None):
+#            if os.geteuid() != 0 or not spwd.getspall():
+#                raise AuthorizerError("super user privileges are required")
+            self.anonymous_user = anonymous_user
+
+            if self.anonymous_user is not None:
+                if not self.anonymous_user in self._get_system_users():
+                    raise ValueError('no such user %s' % self.anonymous_user)
+#                try:
+#                    return pwd.getpwnam(self.anonymous_user).pw_dir
+#                except KeyError:
+#                    raise ValueError('no such user %s' % username)
+
+          
+        # --- overridden / private API
+
+        def validate_authentication(self, username, password):
+            """ Authenticate agains Django ftpauth api.
+            """
+            if username == "anonymous":
+                return self.anonymous_user is not None
+            try:
+                import urllib2
+                ftpauth = urllib2.urlopen('http://localhost:8000/ftpauth/%s/%s/' % (username, password))
+                print ftpauth
+            except:  # url access failed
+                return False
+            else:
+                return ftpauth.status == 'ok'
+            
+#        def validate_authentication(self, username, password):
+#            """Authenticates against shadow password db; return
+#            True on success.
+#            """
+#            if username == "anonymous":
+#                return self.anonymous_user is not None
+#            try:
+#                pw1 = spwd.getspnam(username).sp_pwd
+#                pw2 = crypt.crypt(password, pw1)
+#            except KeyError:  # no such username
+#                return False
+#            else:
+#                return pw1 == pw2
+
+        @replace_anonymous
+#        def impersonate_user(self, username, password):
+#            """Impersonate another user (noop).
+#    
+#            It is always called before accessing the filesystem.
+#            By default it does nothing.  The subclass overriding this
+#            method is expected to provide a mechanism to change the
+#            current user.
+#            """
+        def impersonate_user(self, username, password):
+            """Change process effective user/group ids to reflect
+            logged in user.
+            """
+            try:
+                pwdstruct = pwd.getpwnam("nobody")
+            except KeyError:
+                raise AuthorizerError('no such user %s' % pwdstruct)
+            else:
+                os.setegid(pwdstruct.pw_gid)
+                os.seteuid(pwdstruct.pw_uid)
+                
+#        def terminate_impersonation(self, username):
+#            """Terminate impersonation (noop).
+#    
+#            It is always called after having accessed the filesystem.
+#            By default it does nothing.  The subclass overriding this
+#            method is expected to provide a mechanism to switch back
+#            to the original user.
+#            """
+
+        def terminate_impersonation(self, username):
+            """Revert process effective user/group IDs."""
+            os.setegid(PROCESS_GID)
+            os.seteuid(PROCESS_UID)
+
+        @replace_anonymous
+        def has_user(self, username):
+            """Return True if user exists on the Unix system.
+            If the user has been black listed via allowed_users or
+            rejected_users options always return False.
+            """
+            return username in self._get_system_users()
+
+        @replace_anonymous
+        def get_home_dir(self, username):
+            """Return user home directory."""
+            try:
+                homedir = ('/home/%s/' % (username))
+                return homedir
+            except KeyError:
+                raise AuthorizerError('no such user %s' % username)
+
+        # @staticmethod
+        # def _get_system_users():
+        #     """Return all users defined on the SQLite3 Database."""
+        #     db = sqlite3.connect("/srv/git/vdeli/cdnmanager/ftpserver/ftpusers.db")
+        #     dbusers = db.cursor()
+        #     dbusers.execute('select username from users')
+        #     return [username for username in dbusers]
+                
+
+        def get_msg_login(self, username):
+            return "Login successful."
+
+        def get_msg_quit(self, username):
+            return "Goodbye."
+
+        def get_perms(self, username):
+            return "elradfmw"
+
+        def has_perm(self, username, perm, path=None):
+            return perm in self.get_perms(username)
+
+
+    class DjangoAuthorizer(_Base, BaseDjangoAuthorizer):
+        """A wrapper on top of BaseDjangoAuthorizer providing options
+        
+        Example usages:
+
+         >>> from pyftpdlib.contrib.authorizers import DjangoAuthorizer
+         >>> # accept all user
+         >>> auth = DjangoAuthorizer()
+         """
+
+        # --- public API
+
+        def __init__(self, global_perm="elradfmw",
+                           allowed_users=[],
+                           rejected_users=[],
+                           require_valid_shell=True,
+                           anonymous_user=None,
+                           msg_login="Login successful.",
+                           msg_quit="Goodbye."):
+            """Parameters:
+
+             - (string) global_perm:
+                a series of letters referencing the users permissions;
+                defaults to "elradfmw" which means full read and write
+                access for everybody (except anonymous).
+
+             - (list) allowed_users:
+                a list of users which are accepted for authenticating
+                against the FTP server; defaults to [] (no restrictions).
+
+             - (list) rejected_users:
+                a list of users which are not accepted for authenticating
+                against the FTP server; defaults to [] (no restrictions).
+
+             - (bool) require_valid_shell:
+                Deny access for those users which do not have a valid shell
+                binary listed in /etc/shells.
+                If /etc/shells cannot be found this is a no-op.
+                Anonymous user is not subject to this option, and is free
+                to not have a valid shell defined.
+                Defaults to True (a valid shell is required for login).
+
+             - (string) anonymous_user:
+                specify it if you intend to provide anonymous access.
+                The value expected is a string representing the system user
+                to use for managing anonymous sessions;  defaults to None
+                (anonymous access disabled).
+
+             - (string) msg_login:
+                the string sent when client logs in.
+
+             - (string) msg_quit:
+                the string sent when client quits.
+            """
+            BaseDjangoAuthorizer.__init__(self, anonymous_user)
+            self.global_perm = global_perm
+            self.allowed_users = allowed_users
+            self.rejected_users = rejected_users
+            self.anonymous_user = anonymous_user
+            self.require_valid_shell = require_valid_shell
+            self.msg_login = msg_login
+            self.msg_quit = msg_quit
+
+            self._dummy_authorizer = DummyAuthorizer()
+            self._dummy_authorizer._check_permissions('', global_perm)
+            _Base.__init__(self)
+            if require_valid_shell:
+                for username in self.allowed_users:
+                    if not self._has_valid_shell(username):
+                        raise ValueError("user %s has not a valid shell"
+                                         % username)
+
+        def override_user(self, username, password=None, homedir=None, perm=None,
+                          msg_login=None, msg_quit=None):
+            """Overrides the options specified in the class constructor
+            for a specific user.
+            """
+            if self.require_valid_shell and username != 'anonymous':
+                if not self._has_valid_shell(username):
+                    raise ValueError("user %s has not a valid shell"
+                                     % username)
+            _Base.override_user(self, username, password, homedir, perm,
+                                msg_login, msg_quit)
+
+        # --- overridden / private API
+
+        def validate_authentication(self, username, password):
+            if username == "anonymous":
+                return self.anonymous_user is not None
+            if self._is_rejected_user(username):
+                return False
+            if self.require_valid_shell and username != 'anonymous':
+                if not self._has_valid_shell(username):
+                    return False
+            overridden_password = self._get_key(username, 'pwd')
+            if overridden_password:
+                return overridden_password == password
+
+            return BaseDjangoAuthorizer.validate_authentication(self, username, password)
+
+        @replace_anonymous
+        def has_user(self, username):
+            if self._is_rejected_user(username):
+                return False
+            return username in self._get_system_users()
+
+        @replace_anonymous
+        def get_home_dir(self, username):
+            overridden_home = self._get_key(username, 'home')
+            if overridden_home:
+                return overridden_home
+            return BaseDjangoAuthorizer.get_home_dir(self, username)
+        
+        #need refactor
+        @staticmethod
+        def _has_valid_shell(username):
+            """Return True if the user has a valid shell binary listed
+            in /etc/shells. If /etc/shells can't be found return True.
+            """
+            try:
+                file = open('/etc/shells', 'r')
+            except IOError, err:
+                if err.errno == errno.ENOENT:
+                    return True
+                raise
+            else:
+                try:
+                    shell = "/bin/bash"
                     for line in file:
                         if line.startswith('#'):
                             continue
