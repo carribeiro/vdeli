@@ -1,0 +1,24 @@
+#!/bin/bash
+ENV="/home/chacara/work/vdeli/"
+source $ENV/.env/bin/activate
+
+case "$1" in
+	start)
+		$ENV/cdnmanager/ftpserver/ftpserver.py start
+        	;;
+	stop)
+		$ENV/cdnmanager/ftpserver/ftpserver.py stop
+        	;;
+	restart)
+		$ENV/cdnmanager/ftpserver/ftpserver.py restart
+		;;
+	status)
+		$ENV/cdnmanager/ftpserver/ftpserver.py status
+		;;
+	debug)
+		$ENV/cdnmanager/ftpserver/ftpserver.py --debug
+		;;
+
+	*)
+		echo "ftpserver [start|stop|restart|status|debug]"
+esac
