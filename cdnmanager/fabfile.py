@@ -4,6 +4,7 @@ from fabric.contrib.files import exists
 from contextlib import contextmanager as _contextmanager
 from fabric.contrib.project import rsync_project
 from fabric.context_managers import settings, cd, prefix
+from fabric.contrib.files import sed
 
 # constants
 
@@ -34,8 +35,9 @@ def localhost(path=DEFAULT_PATH_LOCALDEV, user=DEFAULT_USER_LOCALDEV,
     """ Prepares the local computer, assuming a development setup """
     env.hosts = [host] # always deploy to a single host
     env.user = user
-    env.path = path % env  # any attribute in env can be used. we must check 
-                           # whether this opens a security hole or not, 
+    env.path = path % env  # allows substitution of the %(env.user)s attribute. 
+                           # however any attribute in env can be used. we must
+                           # check whether this opens a security hole or not, 
                            # depending on what is in the env dictionary
     env.project_path = '%(path)s/%(prj_name)s' % env
     env.virtualenv_path = '%(project_path)s/.env' % env
@@ -48,7 +50,7 @@ def cdnmanager(path=DEFAULT_PATH_SERVER, user=DEFAULT_USER_SERVER, host=DEFAULT_
     env.hosts = [host] # always deploy to a single host
     env.user = user
     env.path = path # do not perform path substitution on the server.
-                           # it's not really needed and it is safer this way.
+                    # it's not really needed and it is safer this way.
     env.project_path = '%(path)s/%(prj_name)s' % env
     env.virtualenv_path = '%(project_path)s/.env' % env
     env.activate = 'source %(virtualenv_path)s/bin/activate' % env
@@ -117,7 +119,7 @@ def deploy():
             sudo('pip install -r %(project_path)s/cdnmanager/requirements.txt' % env,user=env.user)
             sudo('pip install django-debug-toolbar' % env,user=env.user)
         
-        run('cp %(project_path)s/cdnmanager/local_settings.py %(project_path)s/cdnmanager/cdnmanager/cdn/' % env)
+        run('cp %(project_path)s/local_scripts/local_settings.py %(project_path)s/cdnmanager/cdnmanager/cdn/' % env)
 
     # deploy on a remote system
     else:
@@ -126,7 +128,8 @@ def deploy():
             sudo('mkdir %s' % env.path,user=env.user)
     
         # checks the project locally (on the computer that's running fabric), checks the
-        # the repository locally, and then copy it via rsync.
+        # the repository locally, and then copy it via rsync. this way we don't need git
+        # or a copy of the repo on the server, neither we need deploy keys there.
         local('cd /tmp && git clone git@github.com:carribeiro/vdeli.git' % env)
         sudo('chown %(user)s:%(user)s %(path)s' % env)
         rsync_project(
@@ -135,6 +138,7 @@ def deploy():
                 delete=True,
             )
         local('rm -fr /tmp/%(prj_name)s' % env)
+
         # create virtualenv
         with cd(env.project_path):
             sudo('virtualenv .env --no-site-packages',user=env.user)
@@ -145,8 +149,13 @@ def deploy():
 
 def configure_ftpserver():
     """ Configure the ftpserver to run as a daemon """
-    #create a symlink on /etc/init.d for the ftpserver daemon
-    sudo('ln -s %(project_path)s/ftpserver/ftpserver /etc/init.d/ftpserver' % env,user=env.user)
-    #configure ftpserver to start on boot
-    # TODO: "% env,user=env.user" is really necessary in this line below?
-    sudo('update-rc.d ftpserver defaults' % env,user=env.user)
+    # copy the ftpserver script to the correct location and substitutes the 
+    #_VDELIHOME_ with the correct path
+    run('cp %(project_path)s/cdnmanager/local_scripts/ftpserver %(project_path)s/cdnmanager/ftpserver/' % env)
+    sed('%(project_path)s/cdnmanager/ftpserver/ftpserver' % env, '_VDELIHOME_', '%(project_path)s' % env)
+
+    # copy the ftpserver script to /etc/init.d (updaterc.d didn't work a symlink)
+    sudo('cp %(project_path)s/cdnmanager/ftpserver/ftpserver /etc/init.d/ftpserver' % env)
+
+    # configure ftpserver to start on boot
+    sudo('update-rc.d ftpserver defaults')

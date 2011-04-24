@@ -1,22 +1,24 @@
 #!/bin/bash
 VDELIHOME="_VDELIHOME_"
 source $VDELIHOME/.env/bin/activate
+cd $VDELIHOME/cdnmanager/ftpserver
 
 case "$1" in
 	start)
-		$ENV/cdnmanager/ftpserver/ftpserver.py start
+		./ftpserver.py start
         	;;
 	stop)
-		$ENV/cdnmanager/ftpserver/ftpserver.py stop
+		./ftpserver.py stop
         	;;
 	restart)
-		$ENV/cdnmanager/ftpserver/ftpserver.py restart
+		./ftpserver.py restart
 		;;
 	status)
-		$ENV/cdnmanager/ftpserver/ftpserver.py status
+		./ftpserver.py status
 		;;
 	debug)
-		$ENV/cdnmanager/ftpserver/ftpserver.py --debug
+                # ftpserver is not meant to be called with debug from this script
+		./ftpserver.py --debug
 		;;
 
 	*)
