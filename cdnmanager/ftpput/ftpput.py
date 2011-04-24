@@ -48,17 +48,11 @@ def put(hostname, username, passwd, local, target, mode, overwrite):
 
     try:
         ftp = ftputil.FTPHost(hostname, username, passwd) 
-    except:
-        return 1 
+    except: 
+        return 1
 
-#    try:
-#        ftp.makedirs(target, mode=None)
-#        video = local.split('/')[-1]
-#        target = target + '/' + video        
-#        ftp.upload(local, target, mode, callback=None)
     try:
-        if not ftp.path.exists(target):
-            ftp.makedirs(target, mode=None)
+        ftp.makedirs(target, mode=None)
         
         video = local.split('/')[-1]
         target = target + '/' + video
