@@ -418,15 +418,17 @@ else:
             if username == "anonymous":
                 return self.anonymous_user is not None
             try:
+                import simplejson as json
                 import urllib2
-                ftpauth = urllib2.urlopen('http://localhost:8000/ftpauth/%s/%s/' % (username, password))
-                print ftpauth
+                ftp_auth_request = urllib2.urlopen('http://localhost:8000/ftpauth/%s/%s/' % (username, password))
+                ftp_auth = json.load(ftp_auth_request)
+                print ftp_auth
             except:  # url access failed
                 return False
             else:
-                return ftpauth.status == 'ok'
-            
-       def impersonate_user(self, username, password):
+                return ftp_auth['status'] == 'ok'
+
+        def impersonate_user(self, username, password):
             """Change process effective user/group ids to reflect
             logged in user.
             """
