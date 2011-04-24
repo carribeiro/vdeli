@@ -122,7 +122,7 @@ class _Base(object):
 
 
 try:
-    import pwd, spwd, sqlite3, httplib, urllib
+    import pwd, grp, spwd, sqlite3, httplib, urllib
 except ImportError:
     pass
 else:
@@ -459,9 +459,15 @@ else:
             """Return user home directory."""
             try:
                 homedir = ('/home/%s/' % (username))
+                if not os.path.exists(homedir):
+                    user = pwd.getpwnam("nobody")
+                    group = grp.getgrnam("nogroup")
+                    os.mkdir(homedir)
+                    os.chmod(homedir, "0755")
+                    os.chown(homedir, user.pw_uid, group.gr_gid)
                 return homedir
             except KeyError:
-                raise AuthorizerError('no such user %s or directory' % username)
+                raise AuthorizerError('no such user %s' % username)
 
         def get_msg_login(self, username):
             return "Login successful."
