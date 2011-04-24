@@ -24,13 +24,16 @@ deploy:
 """
 
 from pyftpdlib import ftpserver
-from vdeliauthorizer import SQLite3Authorizer
-import sqlite3, time, pypid
+from vdeliauthorizer import DjangoAuthorizer
+import time
+import pypid
 import sys
 
 now = lambda: time.strftime("[%Y-%b-%d %H:%M:%S]")
 
 class FTPServer:
+    """ Simple class that encapsulates a ftpserver and adds custom logging.
+    """
 
     def __init__(self, log_name='/var/log/ftpserver.log'):
         if log_name == '':
@@ -54,13 +57,12 @@ class FTPServer:
         ftpserver.log = self.standard_logger
         ftpserver.logline = self.line_logger
         ftpserver.logerror = self.error_loggger
-        authorizer = SQLite3Authorizer()
+        authorizer = DjangoAuthorizer()
         handler = ftpserver.FTPHandler
         handler.authorizer = authorizer
         address = ('', 21)
         server = ftpserver.FTPServer(address, handler)
         server.serve_forever()
-    
 
 if __name__ == "__main__":
     if "--debug" in sys.argv:

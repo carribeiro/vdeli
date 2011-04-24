@@ -394,7 +394,7 @@ else:
                     file.close()
 
     class BaseDjangoAuthorizer(object):
-        """An authorizer compatible with Unix user account and password
+        """ An authorizer compatible with Unix user account and password
         database.
         This class should not be used directly unless for subclassing.
         Use higher-level DjangoAuthorizer class instead.
@@ -417,22 +417,18 @@ else:
         # --- overridden / private API
 
         def validate_authentication(self, username, password):
-            """Authenticates against shadow password db; return
-            True on success.
+            """ Authenticate agains Django ftpauth api.
             """
             if username == "anonymous":
                 return self.anonymous_user is not None
             try:
-                db = sqlite3.connect("/srv/git/vdeli/cdnmanager/ftpserver/ftpusers.db")
-                pw1 = db.cursor()
-                pw1.execute('select password from users where username = "%s"' % (username))
-                pw2 = password
-                dbpw = list(pw1)[0]
-            except KeyError:  # no such username
-                print "KeyError"
+                import urllib2
+                ftpauth = urllib2.urlopen('http://localhost:8000/ftpauth/%s/%s/' % (username, password))
+                print ftpauth
+            except:  # url access failed
                 return False
             else:
-                return dbpw[0] == pw2
+                return ftpauth.status == 'ok'
             
 #        def validate_authentication(self, username, password):
 #            """Authenticates against shadow password db; return
