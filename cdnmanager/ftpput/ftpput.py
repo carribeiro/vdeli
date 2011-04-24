@@ -27,18 +27,21 @@ arguments:
         -p, --passwd      (password)
         -l, --video-file  (local video file)
         -t, --target-dir  (put video file in remote directory)
-        -a, --ascii       (change transfer mode to ascii (default = binary))
+
+special modes:
+            -a (change transfer mode to ascii (default = binary))
+            -o (overwrite video file if exists)
         
 Video Delivery Network <http://www.vdeli.com.br>'''
     except:
         return 0
 
-def put(hostname, username, passwd, local, target, mode):
+def put(hostname, username, passwd, local, target, mode, overwrite):
     """    
     performs upload videos to FTP server.
     
     return:
-        0 - upload completed.
+        0 - operation completed.
         1 - could not establish connection with server.
         2 - video has not been sent.
     """
@@ -47,12 +50,23 @@ def put(hostname, username, passwd, local, target, mode):
         ftp = ftputil.FTPHost(hostname, username, passwd) 
     except:
         return 1 
-    
+
+#    try:
+#        ftp.makedirs(target, mode=None)
+#        video = local.split('/')[-1]
+#        target = target + '/' + video        
+#        ftp.upload(local, target, mode, callback=None)
     try:
-        ftp.makedirs(target, mode=None)
+        if not ftp.path.exists(target):
+            ftp.makedirs(target, mode=None)
+        
         video = local.split('/')[-1]
-        target = target + '/' + video        
-        ftp.upload(local, target, mode, callback=None)
+        target = target + '/' + video
+                
+        if not ftp.path.exists(target):
+            ftp.upload(local, target, mode, callback=None)
+        elif overwrite:
+            ftp.upload(local, target, mode, callback=None)
     except:
         return 2
     
@@ -64,7 +78,7 @@ def main(argv):
     provides support for parsing command line.
     """
     try: 
-        opts, args = getopt.getopt(argv, "h:s:u:p:l:t:a", ["help",
+        opts, args = getopt.getopt(argv, "h:s:u:p:l:t:a:o", ["help",
                                                            "server",
                                                            "username",
                                                            "passwd",
@@ -79,10 +93,13 @@ def main(argv):
     
     # (default transfer mode: binary)
     mode = "b"
+    overwrite = False
     
     for option, argument in opts:
         if option == "-a":
-            mode = "a"         
+            mode = "a"
+        elif option == "-o":
+            overwrite = True         
         elif option in ("-h", "--help"):
             usage()
             sys.exit()
@@ -100,12 +117,12 @@ def main(argv):
             assert False, "unhandled option"
 
     try:
-        putout = put(hostname, username, passwd, local, target, mode)
+        putout = put(hostname, username, passwd, local, target, mode, overwrite)
     except:
         usage()
         sys.exit()
     
-    putmsg = ["upload completed.",
+    putmsg = ["operation completed.",
               "could not establish connection with server.",
               "video has not been sent."
               ]
