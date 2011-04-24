@@ -463,7 +463,7 @@ else:
                     user = pwd.getpwnam("nobody")
                     group = grp.getgrnam("nogroup")
                     os.mkdir(homedir)
-                    os.chmod(homedir, "0755")
+                    os.chmod(homedir, 0755)
                     os.chown(homedir, user.pw_uid, group.gr_gid)
                 return homedir
             except KeyError:
