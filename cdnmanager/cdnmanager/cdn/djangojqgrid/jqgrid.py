@@ -187,23 +187,22 @@ class JqGrid(object):
     def get_json(self, request):
         paginator, page, items = self.get_items(request)
         #Code to replace datetime as string by Adam Awan 23/04/11
-        cleaned_items = []
         for index, item in enumerate(items):
             #rowid = 0
             for key, subitem in item.iteritems():
                 if type(subitem) == type(datetime.now()):
                     items[index][key] = subitem.isoformat()
-                elif key == "id":
-                    rowid = str(subitem)
+                #elif key == "id":
+                #    rowid = str(subitem)
                 items[index][key] = unicode(subitem)
-            cleaned_items.append({'id':rowid,
-                        'cell':[val for key,val in item.iteritems() if key != 'id']})
+            #cleaned_items.append({'id':rowid,
+            #            'cell':[val for key,val in item.iteritems() if key != 'id']})
         #cleaned_items = [{"cell": ["2011-04-23T11:29:29.804178","Test File","agshj","100"], "id": "1"}, {"cell": ["2011-04-23T13:00:03.263326","abcdefg1234567", "Test File", "01982"], "id": "2"}]
 
         return json.dumps({
             'page': page.number,
             'total': paginator.num_pages,
-            'rows': cleaned_items,
+            'rows': [item for item in items],
             'records': paginator.count
         })
 
