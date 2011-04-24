@@ -66,7 +66,7 @@ def setup():
     """
 
     sudo('apt-get update')
-    sudo('apt-get install gcc python-all-dev libpq-dev git-core -y')
+    sudo('apt-get install gcc python-all-dev libpq-dev git-core rabbitmq-server -y')
     
     if not exists('/usr/bin/virtualenv',use_sudo=True):
         sudo('apt-get install python-virtualenv -y')
@@ -146,4 +146,5 @@ def deploy():
 def configure_ftpserver():
     """ Configure the ftpserver to run as a daemon """
     # TODO: create a symlink on /etc/init.d for the ftpserver daemon
+    # TODO: it should be run inside the virtualenv, this is not fixed yet
     sudo('ln -s %(project_path)s/ftpserver/ftpserver.py /etc/init.d/' % env,user=env.user)
