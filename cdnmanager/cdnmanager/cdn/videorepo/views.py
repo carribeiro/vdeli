@@ -17,11 +17,6 @@ def grid_handler(request):
     # handles pagination, sorting and searching
     from videorepo.grids import ProjectGrid
     grid = ProjectGrid()
-    print "REQUEST"
-    print request
-    print "HANDLER"
-    print grid.get_json(request)
-    print "ENDHANDLER"
     return HttpResponse(grid.get_json(request), mimetype="application/json")
 
 
@@ -29,9 +24,6 @@ def grid_config(request):
     # build a config suitable to pass to jqgrid constructor   
     from videorepo.grids import ProjectGrid
     grid = ProjectGrid()
-    print "CONFIG"
-    print grid.get_config()
-    print "ENDCONFIG"
     return HttpResponse(grid.get_config(), mimetype="application/json")
 
 
