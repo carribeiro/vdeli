@@ -145,6 +145,8 @@ def deploy():
 
 def configure_ftpserver():
     """ Configure the ftpserver to run as a daemon """
-    # TODO: create a symlink on /etc/init.d for the ftpserver daemon
-    # TODO: it should be run inside the virtualenv, this is not fixed yet
-    sudo('ln -s %(project_path)s/ftpserver/ftpserver.py /etc/init.d/' % env,user=env.user)
+    #create a symlink on /etc/init.d for the ftpserver daemon
+    sudo('ln -s %(project_path)s/ftpserver/ftpserver /etc/init.d/ftpserver' % env,user=env.user)
+    #configure ftpserver to start on boot
+    # TODO: "% env,user=env.user" is really necessary in this line below?
+    sudo('update-rc.d ftpserver defaults' % env,user=env.user)
