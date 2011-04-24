@@ -27,13 +27,15 @@
 </table>
 {% endcomment %}
 
-<table id="mygrid"></table>
+
+<table id="projectgrid">
+</table>
 <div id="pager"></div>
 
 <script type="text/javascript">
-$(document).ready(function () {
+$(function () {    
     $.getJSON("{% url grid_config %}", function(data){
-        $("#mygrid")
+        $("#projectgrid")
             .jqGrid(data)
             .navGrid('#pager', 
                 {add: false, edit: false, del: false, view: true},
@@ -41,7 +43,7 @@ $(document).ready(function () {
         {}, // add options
         {}, // del options 
         { multipleSearch:true, closeOnEscape:true }, // search options 
-        { jqModal:false, closeOnEscape:true} // view options 
+        { jqModal:true, closeOnEscape:true} // view options 
         );
     });
 });
