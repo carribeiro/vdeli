@@ -1,7 +1,7 @@
 BROKER_HOST = "localhost"
 BROKER_PORT = 5672
-BROKER_USER = "myuser"
-BROKER_PASSWORD = "mypassword"
-BROKER_VHOST = "myvhost"
+BROKER_USER = "guest"
+BROKER_PASSWORD = "guest"
+BROKER_VHOST = "/"
 
 CELERY_RESULT_BACKEND = "amqp"
