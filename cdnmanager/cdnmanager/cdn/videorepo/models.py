@@ -14,7 +14,7 @@ class VideoFile(models.Model):
     """
     file_hash = models.CharField(_('file hash'), max_length=200)
     upload_date = models.DateTimeField(_('upload date'))
-    file_name = models.FileField(_('file name'), upload_to='video_files') #, db_column='file_name_str')
+    file_name = models.FileField(_('file name'),upload_to='video_files',max_length=250) #, db_column='file_name_str')
     file_size = models.IntegerField(_('file size'))
     project = models.ForeignKey('VideoProject',null=True)
 
