@@ -78,6 +78,7 @@ class FTPServer:
 
         handler = VdeliHandler
         handler.authorizer = authorizer
+        handler.banner = ftpconfig.FTP_BANNER
         address = ('', 21)
         server = ftpserver.FTPServer(address, handler)
         server.serve_forever()
