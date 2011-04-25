@@ -29,6 +29,11 @@ import time
 import pypid
 import sys
 
+try:
+    import ftpconfig
+except:
+    FTP_HOME_DIR = "/srv/uploads"
+
 now = lambda: time.strftime("[%Y-%b-%d %H:%M:%S]")
 
 class FTPServer:

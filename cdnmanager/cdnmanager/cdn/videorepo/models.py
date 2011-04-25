@@ -18,6 +18,28 @@ class VideoFile(models.Model):
     file_size = models.IntegerField(_('file size'))
     project = models.ForeignKey('VideoProject',null=True)
 
+    @classmethod
+    def from_file_name(cls, video_file_name, project):
+        # calculate the SHA1 hash
+        import hashlib
+        with open(video_file_name, "rb") as f:
+            CHUNK_SIZE = 1024*1024
+            buf = f.read(CHUNK_SIZE)
+            h = hashlib.sha1()
+            while buf:
+                h.update(buf)
+                buf = f.read(CHUNK_SIZE)
+
+        # how to create a filefield programatically
+        # http://groups.google.com/group/django-users/browse_thread/thread/184e5e09db1efce4
+        import os.path
+        import time
+        return VideoFile(file_name=video_file_name, 
+                         file_size=os.path.getsize(video_file_name),
+                         file_hash=h.hexdigest(),
+                         upload_date=time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), 
+                         project=project)
+
     def __str__(self):
         return "VideoFile %s (%d bytes)" % (self.file_name, self.file_size)
 

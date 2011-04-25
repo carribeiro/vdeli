@@ -1,11 +1,14 @@
 *.pyc
 *.db
 *.sublime-project
+*.bak
 .env
 .project
 .pydevproject
 /cdnmanager/virtualenv/
+/cdnmanager/cdnmanager/cdn/uploads
 !/cdnmanager/virtualenv/README
 cdnmanager/cdnmanager/cdn/local_settings.py
 cdnmanager/cdnmanager/cdn/log.txt
 cdnmanager/ftpserver/ftpserver
+cdnmanager/ftpserver/ftpconfig.py

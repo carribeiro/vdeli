@@ -153,6 +153,8 @@ def configure_ftpserver():
     #_VDELIHOME_ with the correct path
     run('cp %(project_path)s/cdnmanager/local_scripts/ftpserver %(project_path)s/cdnmanager/ftpserver/' % env)
     sed('%(project_path)s/cdnmanager/ftpserver/ftpserver' % env, '_VDELIHOME_', '%(project_path)s' % env)
+    run('cp %(project_path)s/cdnmanager/local_scripts/ftpconfig.py %(project_path)s/cdnmanager/ftpserver/' % env)
+    sed('%(project_path)s/cdnmanager/ftpserver/ftpconfig.py' % env, '_VDELIHOME_', '%(project_path)s' % env)
 
     # copy the ftpserver script to /etc/init.d (updaterc.d didn't work a symlink)
     sudo('cp %(project_path)s/cdnmanager/ftpserver/ftpserver /etc/init.d/ftpserver' % env)
