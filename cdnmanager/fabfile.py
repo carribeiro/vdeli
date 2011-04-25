@@ -121,6 +121,7 @@ def deploy():
             sudo('pip install django-debug-toolbar' % env,user=env.user)
         
         run('cp %(project_path)s/local_scripts/local_settings.py %(project_path)s/cdnmanager/cdnmanager/cdn/' % env)
+        sudo('mkdir %(project_path)s/cdnmanager/cdnmanager/cdn/uploads' % env,user=env.user)
 
     # deploy on a remote system
     else:
@@ -139,6 +140,7 @@ def deploy():
                 delete=True,
             )
         local('rm -fr /tmp/%(prj_name)s' % env)
+        sudo('mkdir %(project_path)s/cdnmanager/cdnmanager/cdn/uploads' % env,user=env.user)
 
         # create virtualenv
         with cd(env.project_path):

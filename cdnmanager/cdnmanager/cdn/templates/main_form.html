@@ -1,8 +1,20 @@
 {% extends "baseapp.html" %}
 
 {% block baseapp %}
-<form enctype="multipart/form-data" method="post" action="/videorepo/">
-{{ main_form.as_p }}
+<form enctype="multipart/form-data" method="post" action="{% url upload_form %}" style="margin-bottom:35px;">
+    {% csrf_token %}
+    <div class="fieldWrapper">
+        {{ main_form.project_name.errors }}
+        <label for="id_project_name">Project Name:</label>
+        {{ main_form.project_name }}
+    </div>
+    
+    <div class="fieldWrapper" style="float:left">
+        {{ main_form.video_file.errors }}
+        <label for="id_video_file">Project Name:</label>
+        {{ main_form.video_file }}
+    </div>
+    <div style="float:right;"><input type="submit" value="Upload" /></div>
 </form>
 
 

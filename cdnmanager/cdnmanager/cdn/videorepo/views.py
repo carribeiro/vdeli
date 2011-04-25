@@ -1,10 +1,15 @@
 # Create your views here.
 from django.contrib.auth import authenticate, login
-from django.http import HttpResponse, HttpResponseBadRequest
+from django.http import HttpResponse, HttpResponseBadRequest,\
+    HttpResponseRedirect
 from django.shortcuts import render_to_response, RequestContext
 from django.core import serializers
+from celery.execute import send_task
 
 from forms import MainForm
+import os
+from django.conf import settings
+import logging
 
 def user_login(request):
     if request.method == 'POST':
@@ -46,8 +51,37 @@ def ftpauth(request, username, password):
 
 def main(request):
     if request.method == 'POST':
-        main_form = MainForm(request.POST)
+        main_form = MainForm(request.POST, request.FILES)
         if main_form.is_valid():
+            if main_form.cleaned_data['project_name'].name == 'default video project':
+                video_project = 'default'
+            else:
+                video_project = main_form.cleaned_data['project_name'].name
+            
+            user_dir = '%s/%s' % (settings.MEDIA_ROOT,request.user)
+            if not os.path.exists(user_dir):
+                logging.debug("User directory does not exists: %s " % user_dir)
+                os.mkdir(user_dir)
+            user_project_dir = '%s/%s' % (user_dir,video_project)
+            if not os.path.exists(user_project_dir):
+                logging.debug("Project directory does not exists: %s " % user_project_dir)
+                os.mkdir(user_project_dir)
+            
+            uploaded_file = '%s/%s' % (user_project_dir,\
+                                       request.FILES['video_file'].name)
+                
+            destination = open(uploaded_file, 'wb+')
+            for chunk in request.FILES['video_file'].chunks():
+                destination.write(chunk)
+            destination.close()
+            
+            try:
+                result = send_task("videofile.import", [uploaded_file])
+                print uploaded_file, result
+            except:
+                print "Silent exception"
+                pass
+            
             # Process the data in form.cleaned_data
             # ...
             # TODO: Just reload the current form. I've redirecting to 
