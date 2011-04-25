@@ -453,12 +453,12 @@ else:
             """
             if self.BaseDjangoAuthorizer.validate_authentication(self, username, password):
                 return username
-
+             
         @replace_anonymous
-        def get_home_dir(self, username):
+        def get_home_dir(self, username, ftproot):
             """Return user home directory."""
-            try:
-                homedir = ('/home/%s/' % (username))
+            try:                
+                homedir = ('%s/%s/' % (ftproot, username))
                 if not os.path.exists(homedir):
                     user = pwd.getpwnam("nobody")
                     group = grp.getgrnam("nogroup")
@@ -467,7 +467,7 @@ else:
                     os.chown(homedir, user.pw_uid, group.gr_gid)
                 return homedir
             except KeyError:
-                raise AuthorizerError('no such user %s' % username)
+                raise AuthorizerError('was not found a set ftproot')
 
         def get_msg_login(self, username):
             return "Login successful."
@@ -500,7 +500,8 @@ else:
                            require_valid_shell=True,
                            anonymous_user=None,
                            msg_login="Login successful.",
-                           msg_quit="Goodbye."):
+                           msg_quit="Goodbye.",
+                           ftproot=""):
             """Parameters:
 
              - (string) global_perm:
@@ -544,6 +545,7 @@ else:
             self.require_valid_shell = require_valid_shell
             self.msg_login = msg_login
             self.msg_quit = msg_quit
+            self.ftproot = ftproot
 
             self._dummy_authorizer = DummyAuthorizer()
             self._dummy_authorizer._check_permissions('', global_perm)
@@ -589,10 +591,11 @@ else:
 
         @replace_anonymous
         def get_home_dir(self, username):
+            ftproot = self.ftproot
             overridden_home = self._get_key(username, 'home')
             if overridden_home:
                 return overridden_home
-            return BaseDjangoAuthorizer.get_home_dir(self, username)
+            return BaseDjangoAuthorizer.get_home_dir(self, username, ftproot)
         
         #need refactor
         @staticmethod
