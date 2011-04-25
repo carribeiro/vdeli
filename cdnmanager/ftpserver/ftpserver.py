@@ -67,6 +67,10 @@ class FTPServer:
         class VdeliHandler(ftpserver.FTPHandler):
             def on_file_received(self, file):
                 """ when a new file is received, notify the django app via celery """
+                from celery.task.control import inspect
+                i = inspect()
+                print i.registered_tasks()
+
                 from celery.execute import send_task
                 try:
                     result = send_task("videofile.import", [file])
