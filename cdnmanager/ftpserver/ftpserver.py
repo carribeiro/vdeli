@@ -62,7 +62,7 @@ class FTPServer:
         ftpserver.log = self.standard_logger
         ftpserver.logline = self.line_logger
         ftpserver.logerror = self.error_loggger
-        authorizer = DjangoAuthorizer()
+        authorizer = DjangoAuthorizer(ftproot=ftpconfig.FTP_HOME_DIR)
         handler = ftpserver.FTPHandler
         handler.authorizer = authorizer
         address = ('', 21)
