@@ -1,11 +1,3 @@
-# sample test code
-
-from celery.decorators import task
-
-@task()
-def add(x, y):
-    return x + y
-
 # code to run a task with a lock from inside django. copied from:
 # http://docs.celeryproject.org/en/v2.2.5/cookbook/tasks.html#ensuring-a-task-is-only-executed-one-at-a-time
 
@@ -25,7 +17,7 @@ class VideoFileImporter(Task):
 
         # The cache key consists of the task name and the MD5 digest
         # of the video file name.
-        video_file_name_digest = md5(feed_url).hexdigest()
+        video_file_name_digest = md5(video_file_name).hexdigest()
         lock_id = "%s-lock-%s" % (self.name, video_file_name_digest)
 
         # cache.add fails if if the key already exists
