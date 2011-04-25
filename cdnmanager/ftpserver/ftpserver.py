@@ -63,7 +63,20 @@ class FTPServer:
         ftpserver.logline = self.line_logger
         ftpserver.logerror = self.error_loggger
         authorizer = DjangoAuthorizer(ftproot=ftpconfig.FTP_HOME_DIR)
-        handler = ftpserver.FTPHandler
+
+        class VdeliHandler(ftpserver.FTPHandler):
+            def on_file_received(self, file):
+                """ when a new file is received, notify the django app via celery """
+                from celery.execute import send_task
+                try:
+                    result = send_task("videofile.import", [file])
+                    print file, result
+                except:
+                    print "Silent exception"
+                    pass
+
+
+        handler = VdeliHandler
         handler.authorizer = authorizer
         address = ('', 21)
         server = ftpserver.FTPServer(address, handler)

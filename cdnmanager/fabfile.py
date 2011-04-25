@@ -79,7 +79,8 @@ def setup():
         pass
     else:
         # install webserver and database server
-        sudo('apt-get remove -y apache2 apache2-mpm-prefork apache2-utils') # is mostly pre-installed
+        with settings(warn_only=True):
+            sudo('apt-get remove -y apache2 apache2-mpm-prefork apache2-utils') # is mostly pre-installed
         # install gcc C compiler
         sudo('apt-get install gcc -y')
         if env.webserver=='nginx':
