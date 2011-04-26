@@ -12,7 +12,7 @@ DEFAULT_PATH_LOCALDEV = '/home/%(user)s/work'
 DEFAULT_HOST_LOCALDEV = 'localhost'
 DEFAULT_USER_LOCALDEV = env.user
 
-DEFAULT_PATH_SERVER = '/srv/'
+DEFAULT_PATH_SERVER = '/srv'
 DEFAULT_HOST_SERVER = '187.1.90.3'
 DEFAULT_USER_SERVER = 'vdeliadmin'
 
@@ -132,6 +132,9 @@ def deploy():
         # checks the project locally (on the computer that's running fabric), checks the
         # the repository locally, and then copy it via rsync. this way we don't need git
         # or a copy of the repo on the server, neither we need deploy keys there.
+        with settings(warn_only=True):
+            local('rm -rf /tmp/vdeli')
+            local('mkdir /tmp/vdeli')
         local('cd /tmp && git clone git@github.com:carribeiro/vdeli.git' % env)
         sudo('chown %(user)s:%(user)s %(path)s' % env)
         rsync_project(
@@ -142,13 +145,21 @@ def deploy():
         local('rm -fr /tmp/%(prj_name)s' % env)
         sudo('mkdir %(project_path)s/cdnmanager/cdnmanager/cdn/uploads' % env,user=env.user)
 
+        #with settings(warn_only=True):
+        #    local('rm -rf /tmp/vdeli')
+        #    local('mkdir /tmp/vdeli')
+        #local('cd /tmp/vdeli && git archive --format=tar HEAD | tar xvf -')
+        #rsync_project(local_dir='/tmp/vdeli', remote_dir=env.path, delete=True)
+        #local('rm -rf /tmp/vdeli')
+
+def configure_virtualenv():
         # create virtualenv
         with cd(env.project_path):
             sudo('virtualenv .env --no-site-packages',user=env.user)
         
         # install packages
         with virtualenv():
-            sudo('pip install -r %(project_path)s/requirements.txt' % env,user=env.user)
+            sudo('pip install -r %(project_path)s/cdnmanager/requirements.txt' % env,user=env.user)
 
 def configure_ftpserver():
     """ Configure the ftpserver to run as a daemon """
