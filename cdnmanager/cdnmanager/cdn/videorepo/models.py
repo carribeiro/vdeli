@@ -81,6 +81,9 @@ class CDNRegion(models.Model):
     """
     region_name = models.CharField('Region name', max_length=60)
 
+    def __unicode__(self):
+        return self.region_name
+
 class TransferQueue(models.Model):
     video_file = models.ForeignKey('VideoFile')
     server = models.ForeignKey('CDNServer')
@@ -112,8 +115,8 @@ class VideoProject(models.Model):
     associated with the user. A project has also one or more policies
     that control file replication on the CDN servers.
     """
-    name = models.CharField(max_length=30)
-    creation_date = models.DateTimeField()
+    name = models.CharField(_('Project Name'), max_length=30)
+    creation_date = models.DateTimeField(auto_now_add=True)
     user = models.ForeignKey(User)
 
     def __str__(self):

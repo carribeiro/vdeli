@@ -3,13 +3,28 @@
 from django import forms
 from videorepo.models import VideoProject, ProjectPolicy, CDNRegion
 from django.forms.models import inlineformset_factory
+from django.forms.widgets import TextInput, Select
 
 class MainForm(forms.Form):
     project_name = forms.ModelChoiceField(queryset=VideoProject.objects, empty_label="(select the project)")
     video_file = forms.FileField()
 
-class ProjectForm(forms.ModelForm):
+class VideoProjectForm(forms.ModelForm):
     class Meta:
         model = VideoProject
+        fields = ['name']
 
-ProjectPolicyFormSet = inlineformset_factory(VideoProject, ProjectPolicy)
+class PolicyProjectForm(forms.ModelForm):
+    class Meta:
+        model = ProjectPolicy
+#        fields = ('cdnregion', 'transfer_method',
+#                  'max_simultaneous_segments', 'segment_size_kb',
+#                  'max_bandwidth_per_segment_kbps')
+        widgets = {
+            'max_simultaneous_segments' : TextInput(attrs={'size':'10'}),
+            'max_bandwidth_per_segment_kbps' : TextInput(attrs={'size':'10'}),
+            'segment_size_kb': TextInput(attrs={'size':'10'}),
+            'protocol' : TextInput(attrs={'size':'10'}),
+        }
+#form=PolicyProjectForm
+ProjectPolicyFormSet = inlineformset_factory(VideoProject, ProjectPolicy, form=PolicyProjectForm, extra=3)

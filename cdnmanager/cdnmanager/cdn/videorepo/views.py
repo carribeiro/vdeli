@@ -2,7 +2,8 @@
 from django.contrib.auth import authenticate, login
 from django.http import HttpResponse, HttpResponseBadRequest,\
     HttpResponseRedirect
-from django.shortcuts import render_to_response, RequestContext
+from django.shortcuts import render_to_response, RequestContext,\
+    get_object_or_404
 from django.core import serializers
 from celery.execute import send_task
 
@@ -10,7 +11,7 @@ from forms import MainForm
 import os
 from django.conf import settings
 import logging
-from videorepo.forms import ProjectForm, ProjectPolicyFormSet
+from videorepo.forms import VideoProjectForm, ProjectPolicyFormSet, PolicyProjectForm
 from videorepo.models import VideoProject
 
 def user_login(request):
@@ -96,14 +97,37 @@ def main(request):
         'main_form': main_form,
     }, context_instance=RequestContext(request))
 
-def add_project(request):
-    if request.method == 'POST':
-        return HttpResponseRedirect('')
+def add_project(request, project_id=None):
+    if project_id:
+        vproject = get_object_or_404(VideoProject, pk=project_id)
     else:
-        project_form = ProjectForm()
-        policy_formset = ProjectPolicyFormSet(instance=VideoProject())
+        vproject = VideoProject()
+    
+    if request.method == 'POST':
+        if vproject.name:
+            form = VideoProjectForm(instance=vproject)
+        else:
+            form = VideoProjectForm(request.POST)
+        
+        if form.is_valid():
+            video_project = form.save(commit=False)
+            video_project.user = request.user
+            policy_project_formset = ProjectPolicyFormSet(request.POST, instance=video_project)
+            if policy_project_formset.is_valid():
+                video_project.save()
+                policy_project_formset.save()
+            else:
+                print 'policy_project_form is invalid'
+        else:
+            print 'video_project_form is invalid'
 
-    return render_to_response('add_project.html',
+        return HttpResponseRedirect('')
+    
+    else:
+        project_form = VideoProjectForm()
+        policy_formset = ProjectPolicyFormSet(instance=vproject)
+
+    return render_to_response('project_form.html',
                               {'project_form': project_form,
                                'policy_formset': policy_formset,
              }, context_instance=RequestContext(request))
