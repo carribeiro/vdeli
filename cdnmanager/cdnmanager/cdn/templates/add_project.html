@@ -1,0 +1,9 @@
+{% extends "baseapp.html" %}
+
+{% block baseapp %}
+<form enctype="multipart/form-data" method="post" action="{% url add_project %}" style="margin-bottom:35px;">
+    {% csrf_token %}
+    {{ project_form.as_p }}
+    {{ policy_formset.as_p }}
+</form>
+{% endblock %}

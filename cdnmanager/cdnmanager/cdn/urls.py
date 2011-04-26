@@ -28,6 +28,7 @@ urlpatterns = patterns('',
     url(r'^accounts/logout/$', 'django.contrib.auth.views.logout'),
     url(r'^videorepo/$', 'videorepo.views.main', name='upload_form'),
     url(r'^$', 'videorepo.views.main'),
+    url(r'^project/add/$', 'videorepo.views.add_project', name='add_project'),
     
 ) + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

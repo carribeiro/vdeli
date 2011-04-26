@@ -10,6 +10,8 @@ from forms import MainForm
 import os
 from django.conf import settings
 import logging
+from videorepo.forms import ProjectForm, ProjectPolicyFormSet
+from videorepo.models import VideoProject
 
 def user_login(request):
     if request.method == 'POST':
@@ -94,3 +96,14 @@ def main(request):
         'main_form': main_form,
     }, context_instance=RequestContext(request))
 
+def add_project(request):
+    if request.method == 'POST':
+        return HttpResponseRedirect('')
+    else:
+        project_form = ProjectForm()
+        policy_formset = ProjectPolicyFormSet(instance=VideoProject())
+
+    return render_to_response('add_project.html',
+                              {'project_form': project_form,
+                               'policy_formset': policy_formset,
+             }, context_instance=RequestContext(request))
