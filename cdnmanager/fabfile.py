@@ -183,6 +183,9 @@ def configure_wsgi_script():
     sed('%(project_path)s/cdnmanager/cdnmanager/django.wsgi' % env, '_VIRTUALENVPATH_', '%(virtualenv_path)s' % env)
     sed('%(project_path)s/cdnmanager/cdnmanager/django.wsgi' % env, '_VDELIHOME_', '%(project_path)s' % env)
 
+def set_permissions():
+    sudo('chmod 0777 %(project_path)s/cdnmanager/cdnmanager/cdn/uploads' % env)
+
 def update(update_requirements=False):
     with cd(env.project_path):
         # checkout changes
@@ -198,4 +201,5 @@ def update(update_requirements=False):
             sudo('pip install -U -r %(project_path)s/cdnmanager/requirements.txt' % env,user=env.user)
 
     configure_wsgi_script()
+    set_permissions()
     reload_apache()
