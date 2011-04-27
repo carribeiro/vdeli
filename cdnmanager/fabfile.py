@@ -179,6 +179,10 @@ def configure_ftpserver():
 def reload_apache():
     sudo('touch %(project_path)s/cdnmanager/cdnmanager/django.wsgi' % env)
 
+def configure_wsgi_script():
+    sed('%(project_path)s/cdnmanager/cdnmanager/django.wsgi' % env, '_VIRTUALENVPATH_', '%(virtualenv_path)s' % env)
+    sed('%(project_path)s/cdnmanager/cdnmanager/django.wsgi' % env, '_VDELIHOME_', '%(project_path)s' % env)
+
 def update(update_requirements=False):
     with cd(env.project_path):
         # checkout changes
@@ -193,4 +197,5 @@ def update(update_requirements=False):
         with virtualenv():
             sudo('pip install -U -r %(project_path)s/cdnmanager/requirements.txt' % env,user=env.user)
 
+    configure_wsgi_script()
     reload_apache()
