@@ -1,16 +1,18 @@
 # Create your views here.
+import os
+import logging
+
+from django.conf import settings
+from django.core import serializers
 from django.contrib.auth import authenticate, login
+from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, HttpResponseBadRequest,\
     HttpResponseRedirect
 from django.shortcuts import render_to_response, RequestContext,\
     get_object_or_404
-from django.core import serializers
 from celery.execute import send_task
 
 from forms import MainForm
-import os
-from django.conf import settings
-import logging
 from videorepo.forms import VideoProjectForm, ProjectPolicyFormSet, PolicyProjectForm
 from videorepo.models import VideoProject
 
@@ -20,16 +22,19 @@ def user_login(request):
     else:
         render_to_response('login.html')
 
-def grid_handler(request):
+@login_required
+def video_files_by_user_grid_handler(request):
     # handles pagination, sorting and searching
-    from videorepo.grids import ProjectGrid
-    grid = ProjectGrid()
+    from videorepo.grids import VideoFilesByUserGrid
+    grid = VideoFilesByUserGrid(request.user)
+    #import pdb; pdb.set_trace()
     return HttpResponse(grid.get_json(request), mimetype="application/json")
 
-def grid_config(request):
+@login_required
+def video_files_by_user_grid_config(request):
     # build a config suitable to pass to jqgrid constructor   
-    from videorepo.grids import ProjectGrid
-    grid = ProjectGrid()
+    from videorepo.grids import VideoFilesByUserGrid
+    grid = VideoFilesByUserGrid(request.user)
     return HttpResponse(grid.get_config(), mimetype="application/json")
 
 def ftpauth(request, username, password):
@@ -52,6 +57,7 @@ def ftpauth(request, username, password):
         return HttpResponseBadRequest(json.dumps({'status':'Must be called as a JSON method', 
                 'username':'', }), mimetype='application/json')
 
+@login_required
 def main(request):
     if request.method == 'POST':
         main_form = MainForm(request.POST, request.FILES)
@@ -65,14 +71,14 @@ def main(request):
             if not os.path.exists(user_dir):
                 logging.debug("User directory does not exists: %s " % user_dir)               
                 os.mkdir(user_dir)
-                os.chmod(user_dir, 0777)
+                os.chmod(user_dir, 0777) # TODO: improve this solution. see ticket #25
                                 
             user_project_dir = '%s/%s' % (user_dir,video_project)
             if not os.path.exists(user_project_dir):
                 logging.debug("Project directory does not exists: %s " % user_project_dir)
                 os.mkdir(user_project_dir)
                 os.chdir(user_dir)
-                os.chmod(video_project, 0777)
+                os.chmod(video_project, 0777) # TODO: improve this solution. see ticket #25
             
             uploaded_file = '%s/%s' % (user_project_dir,\
                                        request.FILES['video_file'].name)
@@ -86,8 +92,7 @@ def main(request):
                 result = send_task("videofile.import", [uploaded_file])
                 print uploaded_file, result
             except:
-                print "Silent exception"
-                pass
+                print "Failure on the call to celery.send_task"
             
             # Process the data in form.cleaned_data
             # ...
@@ -101,6 +106,7 @@ def main(request):
         'main_form': main_form,
     }, context_instance=RequestContext(request))
 
+@login_required
 def add_project(request, project_id=None):
     if project_id:
         vproject = get_object_or_404(VideoProject, pk=project_id)

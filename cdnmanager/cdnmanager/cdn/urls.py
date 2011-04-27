@@ -21,8 +21,8 @@ urlpatterns = patterns('',
     # simple interface with the ftpserver
     url(r'^ftpauth/(?P<username>\w+)/(?P<password>\w+)/$', 'videorepo.views.ftpauth' ),
     
-    url(r'^projectgrid/$', 'videorepo.views.grid_handler' , name='grid_handler'),
-    url(r'^projectgrid/cfg/$', 'videorepo.views.grid_config' , name='grid_config'),
+    url(r'^video_files_by_user_grid/$', 'videorepo.views.video_files_by_user_grid_handler' , name='video_files_by_user_grid_handler'),
+    url(r'^video_files_by_user_grid/cfg/$', 'videorepo.views.video_files_by_user_grid_config' , name='video_files_by_user_grid_config'),
 
     url(r'^accounts/login/$', 'django.contrib.auth.views.login'),
     url(r'^accounts/logout/$', 'django.contrib.auth.views.logout'),

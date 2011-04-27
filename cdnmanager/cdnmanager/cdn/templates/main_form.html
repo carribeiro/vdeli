@@ -41,14 +41,14 @@
 {% endcomment %}
 
 
-<table id="projectgrid">
+<table id="video_files_by_user">
 </table>
 <div id="pager"></div>
 
 <script type="text/javascript">
 $(function () {    
-    $.getJSON("{% url grid_config %}", function(data){
-        $("#projectgrid")
+    $.getJSON("{% url video_files_by_user_grid_config %}", function(data){
+        $("#video_files_by_user")
             .jqGrid(data)
             .navGrid('#pager', 
                 {add: false, edit: false, del: false, view: true},
