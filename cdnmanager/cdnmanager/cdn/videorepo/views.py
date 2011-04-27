@@ -63,12 +63,16 @@ def main(request):
             
             user_dir = '%s/%s' % (settings.MEDIA_ROOT,request.user)
             if not os.path.exists(user_dir):
-                logging.debug("User directory does not exists: %s " % user_dir)
+                logging.debug("User directory does not exists: %s " % user_dir)               
                 os.mkdir(user_dir)
+                os.chmod(user_dir, 0777)
+                                
             user_project_dir = '%s/%s' % (user_dir,video_project)
             if not os.path.exists(user_project_dir):
                 logging.debug("Project directory does not exists: %s " % user_project_dir)
                 os.mkdir(user_project_dir)
+                os.chdir(user_dir)
+                os.chmod(video_project, 0777)
             
             uploaded_file = '%s/%s' % (user_project_dir,\
                                        request.FILES['video_file'].name)
