@@ -17,14 +17,10 @@ class VideoProjectForm(forms.ModelForm):
 class PolicyProjectForm(forms.ModelForm):
     class Meta:
         model = ProjectPolicy
-#        fields = ('cdnregion', 'transfer_method',
-#                  'max_simultaneous_segments', 'segment_size_kb',
-#                  'max_bandwidth_per_segment_kbps')
         widgets = {
-            'max_simultaneous_segments' : TextInput(attrs={'size':'10'}),
-            'max_bandwidth_per_segment_kbps' : TextInput(attrs={'size':'10'}),
-            'segment_size_kb': TextInput(attrs={'size':'10'}),
-            'protocol' : TextInput(attrs={'size':'10'}),
+            'max_simultaneous_segments' : TextInput(attrs={'size':'11'}),
+            'max_bandwidth_per_segment_kbps' : TextInput(attrs={'size':'11'}),
+            'segment_size_kb': TextInput(attrs={'size':'11'}),
         }
-#form=PolicyProjectForm
+
 ProjectPolicyFormSet = inlineformset_factory(VideoProject, ProjectPolicy, form=PolicyProjectForm, extra=3)

@@ -129,6 +129,11 @@ TRANSFER_METHOD_CHOICES = (
     ('Trickle', 'Rate Controlled/Segmented FTP'),
 )
 
+PROTOCOL_CHOICES = (
+    ('FTP', 'FTP'),
+    ('HTTP', 'HTTP'),
+)
+
 class ProjectPolicy(models.Model):
     """
     Each policy defines how a video should be transferred, and to which
@@ -136,13 +141,17 @@ class ProjectPolicy(models.Model):
     """
     video_project = models.ForeignKey(VideoProject)
     cdnregion = models.ForeignKey(CDNRegion)
-    transfer_method = models.CharField(max_length=15,
-        choices=TRANSFER_METHOD_CHOICES, 
+    transfer_method = models.CharField(_('Transfer type'), max_length=15,
+        choices=TRANSFER_METHOD_CHOICES,
         default='Single FTP')
-    protocol = models.CharField(max_length=5,default='HTTP')
-    max_simultaneous_segments = models.IntegerField(default=1)
-    segment_size_kb = models.IntegerField(default=0)
-    max_bandwidth_per_segment_kbps = models.IntegerField(default=0)
+    protocol = models.CharField(_('Protocol'), max_length=5, default='HTTP',
+                                choices=PROTOCOL_CHOICES,)
+    max_simultaneous_segments = models.IntegerField(_('MAX Connections'),
+                                default=1)
+    segment_size_kb = models.IntegerField(_('Segment size (MB)'),
+                                default=0)
+    max_bandwidth_per_segment_kbps = models.IntegerField(_('MAX BW (Mbps)'),
+                                default=0)
 
     class Meta:
         verbose_name_plural = "project policies"

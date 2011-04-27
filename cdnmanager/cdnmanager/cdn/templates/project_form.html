@@ -22,31 +22,31 @@
         
         <div style="float:left;margin-right:10px;">
             {{ form.transfer_method.errors }}
-            <div><label for="id_transfer_method">Protocol:</label></div>
+            <div><label for="id_transfer_method">{{ form.transfer_method.label }}:</label></div>
             <div>{{ form.transfer_method }}</div>
         </div>
         
         <div style="float:left;margin-right:10px;">
             {{ form.max_simultaneous_segments.errors }}
-            <div><label for="id_max_simultaneous_segments">MAX Connections:</label></div>
+            <div><label for="id_max_simultaneous_segments">{{ form.max_simultaneous_segments.label }}:</label></div>
             <div>{{ form.max_simultaneous_segments }}</div>
         </div>
 
         <div style="float:left;margin-right:10px;">
             {{ form.max_bandwidth_per_segment_kbps.errors }}
-            <div><label for="id_max_bandwidth_per_segment_kbps">MAX BW (Mbps):</label></div>
+            <div><label for="id_max_bandwidth_per_segment_kbps">{{ form.max_bandwidth_per_segment_kbps.label }}:</label></div>
             <div>{{ form.max_bandwidth_per_segment_kbps }}</div>
         </div>
 
         <div style="float:left;margin-right:10px;">
             {{ form.segment_size_kb.errors }}
-            <div><label for="id_segment_size_kb">Segment size (MB):</label></div>
+            <div><label for="id_segment_size_kb">{{ form.segment_size_kb.label }}:</label></div>
             <div>{{ form.segment_size_kb }}</div>
         </div>
 
         <div style="float:left;margin-right:10px;">
             {{ form.protocol.errors }}
-            <div><label for="id_segment_size_kb">Protocol #2:</label></div>
+            <div><label for="id_segment_size_kb">{{ form.protocol.label }}:</label></div>
             <div>{{ form.protocol }}</div>
         </div>
 
