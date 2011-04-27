@@ -185,6 +185,10 @@ def update(update_requirements=False):
         sudo('git checkout .', user=env.user)
         sudo('git pull', user=env.user)
 
+    with virtualenv():
+        with cd('%(project_path)s/cdnmanager/cdnmanager/cdn' % env):
+            sudo('./manage.py collectstatic -v0 --noinput', user=env.user)
+
     if update_requirements:
         with virtualenv():
             sudo('pip install -U -r %(project_path)s/cdnmanager/requirements.txt' % env,user=env.user)
