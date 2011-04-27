@@ -7,6 +7,7 @@
 .pydevproject
 /cdnmanager/virtualenv/
 /cdnmanager/cdnmanager/cdn/uploads
+/cdnmanager/cdnmanager/cdn/static
 !/cdnmanager/virtualenv/README
 cdnmanager/cdnmanager/cdn/local_settings.py
 cdnmanager/cdnmanager/cdn/log.txt
