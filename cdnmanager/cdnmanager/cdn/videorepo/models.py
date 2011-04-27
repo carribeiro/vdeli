@@ -1,5 +1,7 @@
 #coding: utf-8
 
+import datetime
+
 from django.db import models
 from django.utils.translation import ugettext as _
 from django.contrib.auth.models import User
@@ -152,6 +154,10 @@ class ProjectPolicy(models.Model):
                                 default=0)
     max_bandwidth_per_segment_kbps = models.IntegerField(_('MAX BW (Mbps)'),
                                 default=0)
+    start_time = models.TimeField(_('Sync Window Start'),
+                                default=datetime.time(23,00))
+    end_time = models.TimeField(_('Sync Window End'),
+                                default=datetime.time(04,00))
 
     class Meta:
         verbose_name_plural = "project policies"

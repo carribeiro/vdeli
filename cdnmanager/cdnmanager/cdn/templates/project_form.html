@@ -1,5 +1,12 @@
 {% extends "baseapp.html" %}
 
+{% block javascript %}
+{% comment %}
+{{ policy_formset.media }}
+{% endcomment %}
+
+{% endblock %}
+
 {% block baseapp %}
 <form enctype="multipart/form-data" method="post" action="{% url add_project %}" style="margin-bottom:35px;">
     {% csrf_token %}
@@ -12,7 +19,7 @@
     {{ policy_formset.management_form }}
 
     {% for form in policy_formset %}
-    <div style="border-style:solid;border-width:1px;padding:10px;margin-bottom:20px;height:100px;">
+    <div style="border-style:solid;border-width:1px;padding:10px;margin-bottom:20px;height:145px;">
         <h5>Policy #{{ forloop.counter }}</h5>
         <div style="float:left;margin-right:10px;">
             {{ form.cdnregion.errors }}
@@ -48,6 +55,18 @@
             {{ form.protocol.errors }}
             <div><label for="id_segment_size_kb">{{ form.protocol.label }}:</label></div>
             <div>{{ form.protocol }}</div>
+        </div>
+
+        <div style="float:left;margin-right:10px;">
+            {{ form.start_time.errors }}
+            <div><label for="id_start_time">{{ form.start_time.label }}:</label></div>
+            <div>{{ form.start_time }}</div>
+        </div>
+
+        <div style="float:left;margin-right:10px;">
+            {{ form.end_time.errors }}
+            <div><label for="end_time">{{ form.end_time.label }}:</label></div>
+            <div>{{ form.end_time }}</div>
         </div>
 
     </div>
