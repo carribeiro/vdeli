@@ -139,10 +139,10 @@ class ProjectPolicy(models.Model):
     transfer_method = models.CharField(max_length=15,
         choices=TRANSFER_METHOD_CHOICES, 
         default='Single FTP')
-    protocol = models.CharField(max_length=5)
-    max_simultaneous_segments = models.IntegerField()
-    segment_size_kb = models.IntegerField(default=1000)
-    max_bandwidth_per_segment_kbps = models.IntegerField(default=1000)
+    protocol = models.CharField(max_length=5,default='HTTP')
+    max_simultaneous_segments = models.IntegerField(default=1)
+    segment_size_kb = models.IntegerField(default=0)
+    max_bandwidth_per_segment_kbps = models.IntegerField(default=0)
 
     class Meta:
         verbose_name_plural = "project policies"

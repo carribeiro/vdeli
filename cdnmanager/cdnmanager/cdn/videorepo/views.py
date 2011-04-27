@@ -15,6 +15,7 @@ from celery.execute import send_task
 from forms import MainForm
 from videorepo.forms import VideoProjectForm, ProjectPolicyFormSet, PolicyProjectForm
 from videorepo.models import VideoProject
+from django.core.urlresolvers import reverse
 
 def user_login(request):
     if request.method == 'POST':
@@ -127,11 +128,11 @@ def add_project(request, project_id=None):
                 video_project.save()
                 policy_project_formset.save()
             else:
-                print 'policy_project_form is invalid'
+                logging.debug('policy_project_form is invalid')
         else:
-            print 'video_project_form is invalid'
+            logging.debug('video_project_form is invalid')
 
-        return HttpResponseRedirect('')
+        return HttpResponseRedirect(reverse('main_page'))
     
     else:
         project_form = VideoProjectForm()
