@@ -1,10 +1,10 @@
 # code to run a task with a lock from inside django. copied from:
 # http://docs.celeryproject.org/en/v2.2.5/cookbook/tasks.html#ensuring-a-task-is-only-executed-one-at-a-time
 
-from celery.task import Task
+from celery.task import Task, task
 from django.core.cache import cache
 from django.utils.hashcompat import md5_constructor as md5
-from models import VideoFile
+from models import VideoFile, TransferQueue
 from django.contrib.auth.models import User
 
 LOCK_EXPIRE = 60 * 5 # Lock expires in 5 minutes
@@ -68,10 +68,37 @@ class VideoFileImporter(Task):
                     logger.debug("Video file %s from publisher %s does not have a project named %s "\
                         "and cannot be distributed" % (video_file_name, path_elements[0], path_elements[1]))
 
-                # creates the video file object              
+                # creates the video file object    
                 video_file = VideoFile.from_file_name(video_file_name, video_projects[path_elements[1]])
                 video_file.save()
 
+                # create the transfer entries to all servers in the region
+                # ideally it should be a celery subtask
+
+                # for all policies, list the servers in the region. but never add a server twice.
+                servers = {}
+                print video_file.project
+                print video_file.project.projectpolicy_set.all()
+                for policy in video_file.project.projectpolicy_set.all():
+                    for server in policy.cdnregion.cdnserver_set.all():
+                        if server.node_name not in servers:
+                            servers[server.node_name] = (server, policy)
+                print "SERVERS:", servers.keys()
+                # for each servers, put a new transfer in the queue using the correct parameters
+                for server, policy in servers.values():
+                    print "vf %d: server:%s, region:%s, transfer:%s" % (
+                        videofile.id, server.node_name, policy.cdnregion.region_name, policy.transfer_method)
+                    tq = TransferQueue(
+                        video_file=video_file, 
+                        server=server, 
+                        transfer_method=policy.transfer_method, 
+                        transfer_status="not scheduled",
+                        protocol=policy.protocol,
+                        max_simultaneous_segments=policy.max_simultaneous_segments,
+                        segment_size_kb=policy.segment_size_kb,
+                        max_bandwidth_kbps=policy.max_bandwidth_per_segment_kbps
+                        )
+                    tq.save()
             finally:
                 release_lock()
             return video_file.id, video_file.file_name
@@ -80,3 +107,14 @@ class VideoFileImporter(Task):
             "Video file %s is already being imported by another worker" % (
                 video_file_name))
         return
+
+@task
+def process_transfer_queue(video_file_name):
+    from videorepo.models import VideoFile
+    VideoFile.objects(video)
+
+    # read all the scheduled transfer entries into memory
+
+    # read all the new (not scheduled) transfers entries into memory
+
+    # for each new transfer
