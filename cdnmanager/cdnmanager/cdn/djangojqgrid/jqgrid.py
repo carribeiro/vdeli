@@ -50,7 +50,10 @@ class JqGrid(object):
 
     def get_queryset(self, request):
         if hasattr(self, 'queryset') and self.queryset is not None:
-            queryset = self.queryset._clone()
+            # Fix the problem where the queryset wasn't being converted to a ValueQuerySet
+            # and so couldn't be iterated over
+            #queryset = self.queryset._clone()
+            queryset = self.queryset.values(*self.get_field_names())
         elif hasattr(self, 'model') and self.model is not None:
             queryset = self.model.objects.values(*self.get_field_names())
         else:
