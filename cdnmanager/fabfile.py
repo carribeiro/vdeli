@@ -175,3 +175,18 @@ def configure_ftpserver():
 
     # configure ftpserver to start on boot
     sudo('update-rc.d ftpserver defaults')
+
+def reload_apache():
+    sudo('touch %(project_path)s/cdnmanager/cdnmanager/django.wsgi' % env)
+
+def update(update_requirements=False):
+    with cd(env.project_path):
+        # checkout changes
+        sudo('git checkout .', user=env.user)
+        sudo('git pull', user=env.user)
+
+    if update_requirements:
+        with virtualenv():
+            sudo('pip install -U -r %(project_path)s/cdnmanager/requirements.txt' % env,user=env.user)
+
+    reload_apache()
