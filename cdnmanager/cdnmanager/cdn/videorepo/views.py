@@ -142,3 +142,25 @@ def add_project(request, project_id=None):
                               {'project_form': project_form,
                                'policy_formset': policy_formset,
              }, context_instance=RequestContext(request))
+
+@login_required
+def transfer_queue(request):
+    main_form = MainForm() # An unbound form
+    return render_to_response('transfer_queue.html', {
+        'main_form': main_form,
+    }, context_instance=RequestContext(request))
+
+@login_required
+def transfer_queue_grid_handler(request):
+    # handles pagination, sorting and searching
+    from videorepo.grids import TransferQueueGrid
+    grid = TransferQueueGrid(request.user)
+    return HttpResponse(grid.get_json(request), mimetype="application/json")
+
+@login_required
+def transfer_queue_grid_config(request):
+    # build a config suitable to pass to jqgrid constructor   
+    from videorepo.grids import TransferQueueGrid
+    grid = TransferQueueGrid(request.user)
+    return HttpResponse(grid.get_config(), mimetype="application/json")
+

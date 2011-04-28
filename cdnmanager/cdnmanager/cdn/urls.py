@@ -20,6 +20,10 @@ urlpatterns = patterns('',
 
     # simple interface with the ftpserver
     url(r'^ftpauth/(?P<username>\w+)/(?P<password>\w+)/$', 'videorepo.views.ftpauth' ),
+
+    url(r'^transfer_queue/$', 'videorepo.views.transfer_queue', name='transfer_queue'),
+    url(r'^transfer_queue_grid/$', 'videorepo.views.transfer_queue_grid_handler' , name='transfer_queue_grid_handler'),
+    url(r'^transfer_queue_grid/cfg/$', 'videorepo.views.transfer_queue_grid_config' , name='transfer_queue_grid_config'),
     
     url(r'^video_files_by_user_grid/$', 'videorepo.views.video_files_by_user_grid_handler' , name='video_files_by_user_grid_handler'),
     url(r'^video_files_by_user_grid/cfg/$', 'videorepo.views.video_files_by_user_grid_config' , name='video_files_by_user_grid_config'),

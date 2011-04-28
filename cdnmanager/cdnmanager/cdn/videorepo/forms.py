@@ -9,7 +9,7 @@ from django.conf import settings
 
 class MainForm(forms.Form):
     project_name = forms.ModelChoiceField(queryset=VideoProject.objects, empty_label="(select the project)")
-    video_file = forms.FileField()
+    video_file = forms.FileField(label='Video File')
 
 class VideoProjectForm(forms.ModelForm):
     class Meta:
