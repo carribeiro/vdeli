@@ -106,10 +106,10 @@ class TransferQueue(models.Model):
     # todo: transferqueue also has to refer to the policy and region because the same 
     # server can be found in several regions/policies.
     def __unicode__(self):
-        return "Project:%s, video:%s, server:%s, method:%s, status:%s" % (
+        return "Project:%s, video:%s, server:%s, method:%s, status:%s" % ( 
             self.video_file.project.name,
             self.video_file.file_name, 
-            self.server.node_name.
+            self.server.node_name,
             self.transfer_method,
             self.transfer_status)
     
