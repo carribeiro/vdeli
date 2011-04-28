@@ -14,6 +14,16 @@ BROKER_USER = "guest"
 BROKER_PASSWORD = "guest"
 BROKER_VHOST = "/"
 
+from datetime import timedelta
+
+CELERYBEAT_SCHEDULE = {
+    "runs-every-5-minutes": {
+        "task": "videofile.transfer_one_file",
+        "schedule": timedelta(seconds=600),
+        "args": (),
+    },
+}
+
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
