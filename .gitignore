@@ -12,3 +12,4 @@ cdnmanager/cdnmanager/cdn/local_settings.py
 cdnmanager/cdnmanager/cdn/log.txt
 cdnmanager/ftpserver/ftpserver
 cdnmanager/ftpserver/ftpconfig.py
+cdnserver/data
