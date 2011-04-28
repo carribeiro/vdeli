@@ -1,1 +1,5 @@
 test_data*
+*.mov
+*.avi
+*,mp4
+*.mpg
