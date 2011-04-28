@@ -42,8 +42,12 @@ class VideoFile(models.Model):
                          upload_date=time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), 
                          project=project)
 
-    def __str__(self):
-        return "VideoFile %s (%d bytes)" % (self.file_name, self.file_size)
+    def __unicode__(self):
+        import os.path
+        import settings
+        return "VideoFile %s (%d bytes)" % (
+            os.path.relpath(str(self.file_name), settings.MEDIA_ROOT), 
+            self.file_size)
 
 class SummaryLog(models.Model):
     """
