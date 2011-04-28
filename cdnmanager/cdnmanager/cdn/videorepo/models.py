@@ -97,9 +97,8 @@ class TransferQueue(models.Model):
     # non-normalization
     protocol = models.CharField(max_length=5)
     max_simultaneous_segments = models.IntegerField()
-    current_segments = models.IntegerField()
-    segment_size = models.IntegerField()
-    max_bandwidth_mbps = models.IntegerField()
+    segment_size_kb = models.IntegerField()
+    max_bandwidth_kbps = models.IntegerField()
     
 class SegmentQueue(models.Model):
     """
