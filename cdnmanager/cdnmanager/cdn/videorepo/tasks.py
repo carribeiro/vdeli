@@ -133,19 +133,22 @@ def process_transfer_queue():
     destination = os.path.join(destination, file_name)
 
     print "Trying to connect to host %s:%d" % (host, port)
+    print "SFTP %s -> %s" % (source, destination)
     error = 'unknown error'
     try:
         transport = paramiko.Transport((host, port))
-        transport.connect(username=username, password=password)
         try:
+            transport.connect(username=username, password=password)
             sftp = paramiko.SFTPClient.from_transport(transport)
             try:
-                sftp.put(source, destination)
-            finally:
+                print sftp.put(source, destination)
+            except:
                 error = 'SFTP put failed'
+            finally:
                 sftp.close
-        finally:
+        except:
             error = 'connect failed'
+        finally:
             transport.close
         tq.transfer_status = 'transferred'
         tq.save()
