@@ -19,7 +19,9 @@ class VideoFile(models.Model):
     """
     file_hash = models.CharField(_('file hash'), max_length=200)
     upload_date = models.DateTimeField(_('upload date'))
-    file_name = models.FileField(_('file name'),upload_to='video_files',max_length=250) #, db_column='file_name_str')
+    # todo: check if the upload_to directory is the one being used. seems to be inconsistent with other configs.
+    file_name = models.FileField(_('file name full'),upload_to='video_files',max_length=250)
+    file_name_short = models.CharField(_('file name short'),default='',max_length=120)
     file_size = models.IntegerField(_('file size'))
     project = models.ForeignKey('VideoProject',null=True)
 
@@ -37,16 +39,18 @@ class VideoFile(models.Model):
 
         # how to create a filefield programatically
         # http://groups.google.com/group/django-users/browse_thread/thread/184e5e09db1efce4
+        path, fnshort = os.path.split(str(self.file_name))
         return VideoFile(file_name=video_file_name, 
                          file_size=os.path.getsize(video_file_name),
+                         file_name_short=fnshort,
                          file_hash=h.hexdigest(),
                          upload_date=time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), 
                          project=project)
 
-    @property
-    def file_name_short(self):
-        path, fn = os.path.split(str(self.file_name))
-        return fn
+    def make_file_name_short(self):
+        path, fnshort = os.path.split(str(self.file_name))
+        self.file_name_short = fnshort
+        return fnshort
 
     def __unicode__(self):
         return "VideoFile %s (%d bytes)" % (
