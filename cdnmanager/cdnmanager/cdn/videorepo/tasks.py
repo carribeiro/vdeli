@@ -108,7 +108,10 @@ class VideoFileImporter(Task):
                 video_file_name))
         return
 
-@task(name="videofile.transfer_one_file")
+#@task(name="videofile.transfer_one_file")
+import datetime
+from celery.decorators import periodic_task
+@periodic_task(run_every=datetime.timedelta(minutes=1), name="videofile.transfer_one_file")
 def process_transfer_queue():
     from videorepo.models import VideoFile, TransferQueue
 
@@ -129,8 +132,9 @@ def process_transfer_queue():
     import os.path
     path, file_name = os.path.split(source)
     path, project = os.path.split(path)
-    destination = os.path.join("/srv/vdeli/cdnserver/data", project)
-    destination = os.path.join(destination, file_name)
+    user_dir = os.path.join("/srv/vdeli/cdnserver/data", tq.video_file.project.user.username)
+    project_dir = os.path.join(user_dir, project)
+    destination = os.path.join(project_dir, file_name)
 
     print "Trying to connect to host %s:%d" % (host, port)
     print "SFTP %s -> %s" % (source, destination)
@@ -141,6 +145,8 @@ def process_transfer_queue():
             transport.connect(username=username, password=password)
             sftp = paramiko.SFTPClient.from_transport(transport)
             try:
+                print sftp.mkdir(user_dir)
+                print sftp.mkdir(project_dir)
                 print sftp.put(source, destination)
             except:
                 error = 'SFTP put failed'
