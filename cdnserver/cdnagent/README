@@ -1,0 +1,3 @@
+The 'cdnagent' is responsible for managing the local state of the cdn server.
+It contacts the cdnmanager node and receives commands via RabbitMQ/Celery 
+multiprocessing interface.
