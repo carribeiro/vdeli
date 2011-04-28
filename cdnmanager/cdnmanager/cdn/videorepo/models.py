@@ -89,7 +89,7 @@ class CDNRegion(models.Model):
 class TransferQueue(models.Model):
     video_file = models.ForeignKey('VideoFile')
     server = models.ForeignKey('CDNServer')
-    transfer_type = models.CharField(max_length=15)
+    transfer_method = models.CharField(max_length=15)
     transfer_status = models.CharField(max_length=15)
     # all the following fields are in fact derived from transfer_type. i'm
     # still not sure about the best way to deal with it, so I'll leave some
