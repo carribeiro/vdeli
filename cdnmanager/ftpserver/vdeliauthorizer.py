@@ -122,7 +122,7 @@ class _Base(object):
 
 
 try:
-    import pwd, grp, spwd, sqlite3, httplib, urllib
+    import pwd, grp, spwd, sqlite3, httplib, urllib, ftpconfig
 except ImportError:
     pass
 else:
@@ -420,7 +420,7 @@ else:
             try:
                 import simplejson as json
                 import urllib2
-                ftp_auth_request = urllib2.urlopen('http://localhost:8000/ftpauth/%s/%s/' % (username, password))
+                ftp_auth_request = urllib2.urlopen('http://%s/ftpauth/%s/%s/' % (ftpconfig.FTP_AUTH_ADDRESS, username, password))
                 ftp_auth = json.load(ftp_auth_request)
                 print ftp_auth
             except:  # url access failed
