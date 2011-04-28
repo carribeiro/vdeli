@@ -42,8 +42,12 @@ class VideoFile(models.Model):
                          upload_date=time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), 
                          project=project)
 
-    def __str__(self):
-        return "VideoFile %s (%d bytes)" % (self.file_name, self.file_size)
+    def __unicode__(self):
+        import os.path
+        import settings
+        return "VideoFile %s (%d bytes)" % (
+            os.path.relpath(str(self.file_name), settings.MEDIA_ROOT), 
+            self.file_size)
 
 class SummaryLog(models.Model):
     """
@@ -140,8 +144,8 @@ class VideoProject(models.Model):
 TRANSFER_METHOD_CHOICES = (
     ('Single HTTP', 'Single HTTP transfer'),
     ('Single FTP', 'Single FTP transfer'),
-    ('Torrent-like', 'Fast HTTP with simultaneous connections'),
-    ('Trickle', 'Rate Controlled/Segmented FTP'),
+    ('Torrent-like', 'Fast HTTP (torrent-like)'),
+    ('Trickle', 'Rate Controlled FTP'),
 )
 
 PROTOCOL_CHOICES = (
@@ -161,16 +165,16 @@ class ProjectPolicy(models.Model):
         default='Single FTP')
     protocol = models.CharField(_('Protocol'), max_length=5, default='HTTP',
                                 choices=PROTOCOL_CHOICES,)
-    max_simultaneous_segments = models.IntegerField(_('MAX Connections'),
+    max_simultaneous_segments = models.IntegerField(_('Max Conn'),
                                 default=1)
-    segment_size_kb = models.IntegerField(_('Segment size (kB)'),
+    segment_size_kb = models.IntegerField(_('Seg. size (kB)'),
                                 default=0)
-    max_bandwidth_per_segment_kbps = models.IntegerField(_('MAX BW (kbps)'),
+    max_bandwidth_per_segment_kbps = models.IntegerField(_('Max BW (kbps)'),
                                 default=0)
     start_time = models.TimeField(_('Sync Window Start'),
-                                default=datetime.time(23,00))
+                                default=datetime.time(00,00))
     end_time = models.TimeField(_('Sync Window End'),
-                                default=datetime.time(04,00))
+                                default=datetime.time(00,00))
 
     class Meta:
         verbose_name_plural = "project policies"
