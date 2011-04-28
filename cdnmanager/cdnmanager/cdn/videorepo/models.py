@@ -1,6 +1,9 @@
 #coding: utf-8
 
+import os.path
+import time
 import datetime
+import settings
 
 from django.db import models
 from django.utils.translation import ugettext as _
@@ -34,17 +37,18 @@ class VideoFile(models.Model):
 
         # how to create a filefield programatically
         # http://groups.google.com/group/django-users/browse_thread/thread/184e5e09db1efce4
-        import os.path
-        import time
         return VideoFile(file_name=video_file_name, 
                          file_size=os.path.getsize(video_file_name),
                          file_hash=h.hexdigest(),
                          upload_date=time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), 
                          project=project)
 
+    @property
+    def file_name_short(self):
+        path, fn = os.path.split(str(self.file_name))
+        return fn
+
     def __unicode__(self):
-        import os.path
-        import settings
         return "VideoFile %s (%d bytes)" % (
             os.path.relpath(str(self.file_name), settings.MEDIA_ROOT), 
             self.file_size)
