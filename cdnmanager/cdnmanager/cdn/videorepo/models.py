@@ -39,7 +39,7 @@ class VideoFile(models.Model):
 
         # how to create a filefield programatically
         # http://groups.google.com/group/django-users/browse_thread/thread/184e5e09db1efce4
-        path, fnshort = os.path.split(str(self.file_name))
+        path, fnshort = os.path.split(str(video_file_name))
         return VideoFile(file_name=video_file_name, 
                          file_size=os.path.getsize(video_file_name),
                          file_name_short=fnshort,
