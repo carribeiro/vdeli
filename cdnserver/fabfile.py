@@ -134,7 +134,7 @@ def configure_virtualenv():
         
         # install packages
         with virtualenv():
-            sudo('pip install -r %(project_path)s/cdnmanager/requirements.txt' % env,user=env.user)
+            sudo('pip install -r %(project_path)s/cdnserver/requirements.txt' % env, user=env.user)
 
 def install_nginx():
     '''
