@@ -8,3 +8,4 @@ psycopg2
 ftputil
 celery
 django-celery
+paramiko
