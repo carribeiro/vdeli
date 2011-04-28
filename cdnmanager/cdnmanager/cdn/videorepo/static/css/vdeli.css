@@ -6,3 +6,12 @@
 
 #userinfo ul li { display: inline; }
 #userinfo ul li a { text-decoration: none; padding: .2em 1em; }
+
+#header-logo img {
+    padding-bottom: 4px;
+}
+
+.header-title {
+    font-size: 2.8em;
+    vertical-align: text-bottom;
+}

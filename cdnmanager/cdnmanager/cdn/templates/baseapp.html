@@ -2,13 +2,13 @@
 
 {% block content %}
 <div class="container">
-    <div id="header" class="span-16">
+    <div id="header-logo" class="span-16">
         <a href="/"><img src="{{ STATIC_URL }}images/vdn-small.png"></a>
-        <span style="font-size: 2.8em; margin-bottom:12px; vertical-align: top;">
+        <span class="header-title">
         <b>Video Delivery Network</b>
         </span>
     </div>
-    <div id="header" class="span-8 last">
+    <div id="header-user" class="span-8 last">
         {% if request.user.is_authenticated %}
             <div id="userinfo" style="text-align:right">
                 <a href="/accounts/{{ request.user.username }}">{{ request.user.username }}</a> |
