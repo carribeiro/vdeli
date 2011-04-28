@@ -161,7 +161,7 @@ class ProjectPolicy(models.Model):
         default='Single FTP')
     protocol = models.CharField(_('Protocol'), max_length=5, default='HTTP',
                                 choices=PROTOCOL_CHOICES,)
-    max_simultaneous_segments = models.IntegerField(_('MAX Conn'),
+    max_simultaneous_segments = models.IntegerField(_('Max Conn'),
                                 default=1)
     segment_size_kb = models.IntegerField(_('Seg. size (kB)'),
                                 default=0)

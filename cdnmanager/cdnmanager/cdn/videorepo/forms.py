@@ -18,15 +18,15 @@ class VideoProjectForm(forms.ModelForm):
 
 class PolicyProjectForm(forms.ModelForm):
 
-    #transfer_type = forms.ModelChoiceField(widget=forms.TextInput)
-   
     class Media:
         js = ('/static/admin/js/core.js', '/static/admin/jsi18n/')
 
     class Meta:
         model = ProjectPolicy
+        fields = ('cdnregion', 'transfer_method' , 'protocol',
+                  'max_simultaneous_segments', 'max_bandwidth_per_segment_kbps',
+                  'segment_size_kb', 'start_time', 'end_time')
         widgets = {
-            'transfer_type': TextInput(attrs={'size':'8'}),
             'max_simultaneous_segments' : TextInput(attrs={'size':'8'}),
             'max_bandwidth_per_segment_kbps' : TextInput(attrs={'size':'8'}),
             'segment_size_kb': TextInput(attrs={'size':'8'}),
