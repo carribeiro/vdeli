@@ -73,6 +73,9 @@ class CDNServer(models.Model):
     node_name = models.CharField('Nome do Nodo', max_length=60)
     cdn_group = models.ForeignKey('CDNRegion')
 
+    def __unicode__(self):
+        return "%s (ip:%s, group:%s)" % (self.node_name, self.ip_address, self.cdn_group.region_name)
+
 # We will include a CDNCluster entity later. For now, every cluster has only one server.
 
 class CDNRegion(models.Model):
@@ -99,6 +102,16 @@ class TransferQueue(models.Model):
     max_simultaneous_segments = models.IntegerField()
     segment_size_kb = models.IntegerField()
     max_bandwidth_kbps = models.IntegerField()
+
+    # todo: transferqueue also has to refer to the policy and region because the same 
+    # server can be found in several regions/policies.
+    def __unicode__(self):
+        return "Project:%s, video:%s, server:%s, method:%s, status:%s" % (
+            self.video_file.project.name,
+            self.video_file.file_name, 
+            self.server.node_name.
+            self.transfer_method,
+            self.transfer_status)
     
 class SegmentQueue(models.Model):
     """
@@ -120,8 +133,8 @@ class VideoProject(models.Model):
     creation_date = models.DateTimeField(auto_now_add=True)
     user = models.ForeignKey(User)
 
-    def __str__(self):
-        return "VideoProject %s" % (self.name, )
+    def __unicode__(self):
+        return "Project:%s, user:%s" % (self.name, self.user.username)
 
 TRANSFER_METHOD_CHOICES = (
     ('Single HTTP', 'Single HTTP transfer'),
@@ -149,9 +162,9 @@ class ProjectPolicy(models.Model):
                                 choices=PROTOCOL_CHOICES,)
     max_simultaneous_segments = models.IntegerField(_('MAX Connections'),
                                 default=1)
-    segment_size_kb = models.IntegerField(_('Segment size (MB)'),
+    segment_size_kb = models.IntegerField(_('Segment size (kB)'),
                                 default=0)
-    max_bandwidth_per_segment_kbps = models.IntegerField(_('MAX BW (Mbps)'),
+    max_bandwidth_per_segment_kbps = models.IntegerField(_('MAX BW (kbps)'),
                                 default=0)
     start_time = models.TimeField(_('Sync Window Start'),
                                 default=datetime.time(23,00))
@@ -160,3 +173,7 @@ class ProjectPolicy(models.Model):
 
     class Meta:
         verbose_name_plural = "project policies"
+
+    def __unicode__(self):
+        return "Policy:%s, project:%s, region:%s, user: %s" % (
+            self.id, self.video_project.name, self.cdnregion.region_name, self.video_project.user.username)
