@@ -108,14 +108,51 @@ class VideoFileImporter(Task):
                 video_file_name))
         return
 
-@task
-def process_transfer_queue(video_file_name):
-    from videorepo.models import VideoFile
+@task(name="videofile.transfer_one_file")
+def process_transfer_queue():
+    from videorepo.models import VideoFile, TransferQueue
 
     # get the first entry on the transfer queue and handle it
     try:
-        tq = TransferQueue.objects.filter(transfer_status=='not scheduled')[0]
+        tq = TransferQueue.objects.filter(transfer_status='not scheduled')[0]
     except:
         return "no transfer to be done"
 
-    # for each new transfer
+    # do one single transfer
+    import paramiko
+    host = tq.server.ip_address
+    username = 'vdeliadmin'
+    password = 'vDe11Admin'
+    port = 22
+    source = str(tq.video_file.file_name)
+
+    import os.path
+    path, file_name = os.path.split(source)
+    path, project = os.path.split(path)
+    destination = os.path.join("/srv/vdeli/cdnserver/data", project)
+    destination = os.path.join(destination, file_name)
+
+    print "Trying to connect to host %s:%d" % (host, port)
+    error = 'unknown error'
+    try:
+        transport = paramiko.Transport((host, port))
+        transport.connect(username=username, password=password)
+        try:
+            sftp = paramiko.SFTPClient.from_transport(transport)
+            try:
+                sftp.put(source, destination)
+            finally:
+                error = 'SFTP put failed'
+                sftp.close
+        finally:
+            error = 'connect failed'
+            transport.close
+        tq.transfer_status = 'transferred'
+        tq.save()
+    except:
+        tq.transfer_status = error
+        tq.save()
+
+    #ssh = paramiko.SSHClient()
+    #ssh.connect(server.ip_address, username=username, password=password)
+    #ssh_stdin, ssh_stdout, ssh_stderr = ssh_session.exec_command("ftpget ")
