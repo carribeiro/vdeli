@@ -87,7 +87,7 @@ class VideoFileImporter(Task):
                 # for each servers, put a new transfer in the queue using the correct parameters
                 for server, policy in servers.values():
                     print "vf %d: server:%s, region:%s, transfer:%s" % (
-                        videofile.id, server.node_name, policy.cdnregion.region_name, policy.transfer_method)
+                        video_file.id, server.node_name, policy.cdnregion.region_name, policy.transfer_method)
                     tq = TransferQueue(
                         video_file=video_file, 
                         server=server, 
@@ -111,10 +111,11 @@ class VideoFileImporter(Task):
 @task
 def process_transfer_queue(video_file_name):
     from videorepo.models import VideoFile
-    VideoFile.objects(video)
 
-    # read all the scheduled transfer entries into memory
-
-    # read all the new (not scheduled) transfers entries into memory
+    # get the first entry on the transfer queue and handle it
+    try:
+        tq = TransferQueue.objects.filter(transfer_status=='not scheduled')[0]
+    except:
+        return "no transfer to be done"
 
     # for each new transfer
