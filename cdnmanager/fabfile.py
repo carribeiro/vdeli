@@ -11,10 +11,12 @@ from fabric.contrib.files import sed
 DEFAULT_PATH_LOCALDEV = '/home/%(user)s/work'
 DEFAULT_HOST_LOCALDEV = 'localhost'
 DEFAULT_USER_LOCALDEV = env.user
+DEFAULT_AUTH_LOCALDEV = 'localhost:8000'
 
 DEFAULT_PATH_SERVER = '/srv'
 DEFAULT_HOST_SERVER = '187.1.90.3'
 DEFAULT_USER_SERVER = 'vdeliadmin'
+DEFAULT_AUTH_SERVER = '187.1.90.3'
 
 # globals
 
@@ -31,7 +33,7 @@ env.user='vdeliadmin'
 # It does not make sense to deploy the cdnmanager on more than one host.
 
 def localhost(path=DEFAULT_PATH_LOCALDEV, user=DEFAULT_USER_LOCALDEV, 
-        host=DEFAULT_HOST_LOCALDEV, createdb=True):
+        host=DEFAULT_HOST_LOCALDEV, auth=DEFAULT_AUTH_LOCALDEV, createdb=True):
     """ Prepares the local computer, assuming a development setup """
     env.hosts = [host] # always deploy to a single host
     env.user = user
@@ -43,9 +45,10 @@ def localhost(path=DEFAULT_PATH_LOCALDEV, user=DEFAULT_USER_LOCALDEV,
     env.virtualenv_path = '%(project_path)s/.env' % env
     env.activate = 'source %(virtualenv_path)s/bin/activate' % env
     env.createdb = createdb
+    env.ftpauth = auth
 
-def cdnmanager(path=DEFAULT_PATH_SERVER, user=DEFAULT_USER_SERVER, host=DEFAULT_HOST_SERVER, 
-        createdb=True):
+def cdnmanager(path=DEFAULT_PATH_SERVER, user=DEFAULT_USER_SERVER, host=DEFAULT_HOST_SERVER,
+auth=DEFAULT_AUTH_SERVER, createdb=True):
     """ Deploy to a dedicated webserver (can be staging or production) """
     env.hosts = [host] # always deploy to a single host
     env.user = user
@@ -55,6 +58,7 @@ def cdnmanager(path=DEFAULT_PATH_SERVER, user=DEFAULT_USER_SERVER, host=DEFAULT_
     env.virtualenv_path = '%(project_path)s/.env' % env
     env.activate = 'source %(virtualenv_path)s/bin/activate' % env
     env.createdb = createdb
+    env.ftpauth = auth
 
 @_contextmanager
 def virtualenv():
@@ -169,6 +173,7 @@ def configure_ftpserver():
     sed('%(project_path)s/cdnmanager/ftpserver/ftpserver' % env, '_VDELIHOME_', '%(project_path)s' % env)
     run('cp %(project_path)s/cdnmanager/local_scripts/ftpconfig.py %(project_path)s/cdnmanager/ftpserver/' % env)
     sed('%(project_path)s/cdnmanager/ftpserver/ftpconfig.py' % env, '_VDELIHOME_', '%(project_path)s' % env)
+    sed('%(project_path)s/cdnmanager/ftpserver/ftpconfig.py' % env, '_AUTH_SERVER_', env.ftpauth)
 
     # copy the ftpserver script to /etc/init.d (updaterc.d didn't work a symlink)
     sudo('cp %(project_path)s/cdnmanager/ftpserver/ftpserver /etc/init.d/ftpserver' % env)
