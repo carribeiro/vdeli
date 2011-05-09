@@ -145,9 +145,18 @@ def process_transfer_queue():
             transport.connect(username=username, password=password)
             sftp = paramiko.SFTPClient.from_transport(transport)
             try:
-                print sftp.mkdir(user_dir)
-                print sftp.mkdir(project_dir)
-                print sftp.put(source, destination)
+                try:
+                    print "mkdir %s" % user_dir, sftp.mkdir(user_dir)
+                except:
+                    pass
+                try:
+                    print "mkdir %s" % project_dir, sftp.mkdir(project_dir)
+                except:
+                    pass
+                try:
+                    print "sftp" % sftp.put(source, destination)
+                except:
+                    pass
             except:
                 error = 'SFTP put failed'
             finally:
