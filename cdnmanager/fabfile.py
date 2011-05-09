@@ -23,7 +23,7 @@ DEFAULT_AUTH_SERVER = '187.1.90.3'
 env.prj_name = 'vdeli' # no spaces!
 env.webserver = 'apache2' # nginx or apache2 (directory name below /etc!)
 env.dbserver = 'postgresql' # mysql or postgresql
-env.user='vdeliadmin'
+env.user = 'vdeliadmin'
 
 # environments
 #
@@ -32,7 +32,7 @@ env.user='vdeliadmin'
 # server deployment. In both cases, we always set up a single host at a time.
 # It does not make sense to deploy the cdnmanager on more than one host.
 
-def localhost(path=DEFAULT_PATH_LOCALDEV, user=DEFAULT_USER_LOCALDEV, 
+def localhost(path=DEFAULT_PATH_LOCALDEV, user=DEFAULT_USER_LOCALDEV,
         host=DEFAULT_HOST_LOCALDEV, auth=DEFAULT_AUTH_LOCALDEV, createdb=True):
     """ Prepares the local computer, assuming a development setup """
     env.hosts = [host] # always deploy to a single host
@@ -73,10 +73,10 @@ def setup():
 
     sudo('apt-get update')
     sudo('apt-get install gcc python-all-dev libpq-dev git-core rabbitmq-server -y')
-    
-    if not exists('/usr/bin/virtualenv',use_sudo=True):
+
+    if not exists('/usr/bin/virtualenv', use_sudo=True):
         sudo('apt-get install python-virtualenv -y')
-    if not exists('/usr/bin/pip',use_sudo=True):
+    if not exists('/usr/bin/pip', use_sudo=True):
         sudo('apt-get install python-pip -y')
 
     if env.hosts[0] == 'localhost':
@@ -87,14 +87,14 @@ def setup():
             sudo('apt-get remove -y apache2 apache2-mpm-prefork apache2-utils') # is mostly pre-installed
         # install gcc C compiler
         sudo('apt-get install gcc -y')
-        if env.webserver=='nginx':
+        if env.webserver == 'nginx':
             sudo('apt-get install -y nginx')
         else:
             sudo('apt-get install -y apache2-mpm-worker apache2-utils') # apache2-threaded
             sudo('apt-get install -y libapache2-mod-wsgi') # outdated on hardy!
 
     if env.createdb:
-        if not exists('/etc/postgresql',use_sudo=True):
+        if not exists('/etc/postgresql', use_sudo=True):
             sudo('apt-get install -y postgresql')
         # creates the db user and the database, but doesn't stop on failure, 
         # because these may have been created before
@@ -108,31 +108,31 @@ def deploy():
     if env.hosts[0] == 'localhost':
         # create project dir
         if not exists(env.path):
-            sudo('mkdir %s' % env.path,user=env.user)
+            sudo('mkdir %s' % env.path, user=env.user)
 
         if not exists(os.path.join(env.path, 'vdeli')):
             local('cd %(path)s && git clone git@github.com:carribeiro/vdeli.git' % env)
         else:
             local('cd %(path)s && cd vdeli && git pull' % env)
-        
+
         # create virtualenv
         with cd(env.project_path):
-            sudo('virtualenv .env --no-site-packages',user=env.user)
-        
+            sudo('virtualenv .env --no-site-packages', user=env.user)
+
         # install packages
         with virtualenv():
-            sudo('pip install -r %(project_path)s/cdnmanager/requirements.txt' % env,user=env.user)
-            sudo('pip install django-debug-toolbar' % env,user=env.user)
-        
+            sudo('pip install -r %(project_path)s/cdnmanager/requirements.txt' % env, user=env.user)
+            sudo('pip install django-debug-toolbar' % env, user=env.user)
+
         run('cp %(project_path)s/local_scripts/local_settings.py %(project_path)s/cdnmanager/cdnmanager/cdn/' % env)
-        sudo('mkdir %(project_path)s/cdnmanager/cdnmanager/cdn/uploads' % env,user=env.user)
+        sudo('mkdir %(project_path)s/cdnmanager/cdnmanager/cdn/uploads' % env, user=env.user)
 
     # deploy on a remote system
     else:
         # create project dir
         if not exists(env.path):
-            sudo('mkdir %s' % env.path,user=env.user)
-    
+            sudo('mkdir %s' % env.path, user=env.user)
+
         # checks the project locally (on the computer that's running fabric), checks the
         # the repository locally, and then copy it via rsync. this way we don't need git
         # or a copy of the repo on the server, neither we need deploy keys there.
@@ -142,12 +142,12 @@ def deploy():
         local('cd /tmp && git clone git@github.com:carribeiro/vdeli.git' % env)
         sudo('chown %(user)s:%(user)s %(path)s' % env)
         rsync_project(
-                local_dir = '/tmp/vdeli',
-                remote_dir = env.path,
+                local_dir='/tmp/vdeli',
+                remote_dir=env.path,
                 delete=True,
             )
         local('rm -fr /tmp/%(prj_name)s' % env)
-        sudo('mkdir %(project_path)s/cdnmanager/cdnmanager/cdn/uploads' % env,user=env.user)
+        sudo('mkdir %(project_path)s/cdnmanager/cdnmanager/cdn/uploads' % env, user=env.user)
 
         #with settings(warn_only=True):
         #    local('rm -rf /tmp/vdeli')
@@ -159,11 +159,11 @@ def deploy():
 def configure_virtualenv():
         # create virtualenv
         with cd(env.project_path):
-            sudo('virtualenv .env --no-site-packages',user=env.user)
-        
+            sudo('virtualenv .env --no-site-packages', user=env.user)
+
         # install packages
         with virtualenv():
-            sudo('pip install -r %(project_path)s/cdnmanager/requirements.txt' % env,user=env.user)
+            sudo('pip install -r %(project_path)s/cdnmanager/requirements.txt' % env, user=env.user)
 
 def configure_ftpserver():
     """ Configure the ftpserver to run as a daemon """
@@ -180,6 +180,15 @@ def configure_ftpserver():
 
     # configure ftpserver to start on boot
     sudo('update-rc.d ftpserver defaults')
+
+def configure_celeryd_init_script():
+    """ Configure the celeryd to run as a daemon """
+    run('cp %(project_path)s/cdnmanager/local_scripts/celeryd %(project_path)s/cdnmanager/' % env)
+    sed('%(project_path)s/cdnmanager/celeryd' % env, '_VIRTUALENVPATH_', '%(virtualenv_path)s' % env)
+    sed('%(project_path)s/cdnmanager/celeryd' % env, '_VDELIHOME_', '%(project_path)s' % env)
+    sudo('mv %(project_path)s/cdnmanager/celeryd /etc/init.d/' % env)
+    sudo('chmod +x /etc/init.d/celeryd')
+    sudo('update-rc.d celeryd defaults')
 
 def reload_apache():
     sudo('touch %(project_path)s/cdnmanager/cdnmanager/django.wsgi' % env)
@@ -203,7 +212,7 @@ def update(update_requirements=False):
 
     if update_requirements:
         with virtualenv():
-            sudo('pip install -U -r %(project_path)s/cdnmanager/requirements.txt' % env,user=env.user)
+            sudo('pip install -U -r %(project_path)s/cdnmanager/requirements.txt' % env, user=env.user)
 
     configure_wsgi_script()
     set_permissions()
