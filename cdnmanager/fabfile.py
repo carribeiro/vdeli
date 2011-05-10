@@ -194,6 +194,7 @@ def reload_apache():
     sudo('touch %(project_path)s/cdnmanager/cdnmanager/django.wsgi' % env)
 
 def configure_wsgi_script():
+    run('cp %(project_path)s/cdnmanager/local_scripts/django.wsgi %(project_path)s/cdnmanager/cdnmanager/' % env)
     sed('%(project_path)s/cdnmanager/cdnmanager/django.wsgi' % env, '_VIRTUALENVPATH_', '%(virtualenv_path)s' % env)
     sed('%(project_path)s/cdnmanager/cdnmanager/django.wsgi' % env, '_VDELIHOME_', '%(project_path)s' % env)
 
