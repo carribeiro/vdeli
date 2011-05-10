@@ -1,13 +1,19 @@
 # videorepo.forms file
 
 from django import forms
-from videorepo.models import VideoProject, ProjectPolicy, CDNRegion
+from videorepo.models import VideoProject, ProjectPolicy, CDNRegion, VideoFile
 from django.forms.models import inlineformset_factory
 from django.forms.widgets import TextInput, Select
 from django.contrib.admin import widgets
 from django.conf import settings
 
 class MainForm(forms.Form):
+
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user')
+        super(MainForm, self).__init__(*args, **kwargs)
+        self.fields['project_name'].queryset = VideoProject.objects.filter(user=self.user)
+
     project_name = forms.ModelChoiceField(queryset=VideoProject.objects, empty_label="(select the project)")
     video_file = forms.FileField(label='Video File')
 
