@@ -4,6 +4,59 @@
 {% comment %}
 {{ policy_formset.media }}
 {% endcomment %}
+<script type="text/javascript" src="/static/js/jquery/jquery-1.5.2.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){
+    var switch_fields = function($method, $policy_id) {
+        var policy_id = $policy_id
+        var method = $method
+        var protocol_select = '#id_projectpolicy_set-' + policy_id + '-protocol';
+        var max_conn = '#id_projectpolicy_set-' + policy_id + '-max_simultaneous_segments';
+        var seg_size = '#id_projectpolicy_set-' + policy_id + '-segment_size_kb';
+        switch (method) {
+            case 'Single FTP':
+                $(protocol_select).val('FTP');
+                $(max_conn).val('1');
+                $(max_conn).attr('readonly','readonly');
+                $(seg_size).val('0');
+                $(seg_size).attr('readonly','readonly');
+                break;
+            case 'Single HTTP':
+                $(protocol_select).val('HTTP');
+                $(max_conn).val('1');
+                $(max_conn).attr('readonly','readonly');
+                $(seg_size).val('0');
+                $(seg_size).attr('readonly','readonly');
+                break;
+            case 'Torrent-like':
+                $(protocol_select).val('HTTP');
+                $(max_conn).val('3');
+                $(max_conn).removeAttr('readonly');
+                $(seg_size).val('10000');
+                $(seg_size).removeAttr('readonly');
+                break;
+            case 'Trickle':
+                $(protocol_select).val('FTP');
+                $(max_conn).val('1');
+                $(max_conn).removeAttr('readonly');
+                $(seg_size).val('1000');
+                $(seg_size).removeAttr('readonly');
+                break;
+        }
+        
+        
+        };
+    switch_fields('Single FTP', '0');
+    switch_fields('Single FTP', '1');
+    switch_fields('Single FTP', '2');
+    $(".transfer_method").change(function () {
+            var method = $(this).val();
+            var policy_id = $(this).attr('id').replace('id_projectpolicy_set-','').replace('-transfer_method','');
+            switch_fields(method,policy_id);
+
+    });
+})
+</script>
 
 {% endblock %}
 
