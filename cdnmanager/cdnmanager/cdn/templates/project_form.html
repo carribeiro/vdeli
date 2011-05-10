@@ -71,6 +71,7 @@
 
     </div>
     {% endfor %}
-    <div><input type="submit" value="Add Project" /></div>
+    <div><input type="submit" value="Add Project" />
+    <div style="float:right"><input type="button" name="Cancel" value="Cancel" onclick="window.location = '{% url main_page %}' " /></div>
 </form>
 {% endblock %}
