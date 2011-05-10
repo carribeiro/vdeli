@@ -33,7 +33,7 @@ class PolicyProjectForm(forms.ModelForm):
                   'max_simultaneous_segments', 'max_bandwidth_per_segment_kbps',
                   'segment_size_kb', 'start_time', 'end_time')
         widgets = {
-            'max_simultaneous_segments' : TextInput(attrs={'size':'8'}),
+            'max_simultaneous_segments' : TextInput(attrs={'size':'6'}),
             'max_bandwidth_per_segment_kbps' : TextInput(attrs={'size':'8'}),
             'segment_size_kb': TextInput(attrs={'size':'8'}),
             'start_time': TextInput(attrs={'size':'12'}),

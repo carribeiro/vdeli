@@ -19,7 +19,7 @@
     {{ policy_formset.management_form }}
 
     {% for form in policy_formset %}
-    <div style="border-style:solid;border-width:1px;padding:10px;margin-bottom:20px;height:145px;">
+    <div style="border-style:solid;border-width:1px;padding:10px;margin-bottom:20px;">
         <h5>Policy #{{ forloop.counter }}</h5>
         <div style="float:left;margin-right:10px;">
             {{ form.cdnregion.errors }}
@@ -68,6 +68,7 @@
             <div><label for="end_time">{{ form.end_time.label }}:</label></div>
             <div>{{ form.end_time }}</div>
         </div>
+        <div style="clear:both;"></div>
 
     </div>
     {% endfor %}
