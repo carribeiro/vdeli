@@ -3,19 +3,18 @@
 {% block baseapp %}
 <form enctype="multipart/form-data" method="post" action="{% url upload_form %}" style="margin-bottom:35px;">
     {% csrf_token %}
-    <div class="fieldWrapper">
+    <div class="fieldWrapper" style="float:left;">
         {{ main_form.project_name.errors }}
         <label for="id_project_name">Project Name:</label>
         {{ main_form.project_name }}
-        <a style="margin-left:10px;" href="{% url add_project %}">add new</a>
     </div>
-    
-    <div class="fieldWrapper" style="float:left">
+    <div style="margin:10px 15px 0 5px; float:left;"><a href="{% url add_project %}"><img src="{{ STATIC_URL }}/images/add.png" /></a></div>
+    <div class="fieldWrapper" style="margin:5px 10px 0 0px; float:left;">
         {{ main_form.video_file.errors }}
-        <label for="id_video_file">Project Name:</label>
+        <label for="id_video_file">Select File:</label>
         {{ main_form.video_file }}
     </div>
-    <div style="float:right;"><input type="submit" value="Upload" /></div>
+    <div style="margin:5px 10px 0 0; float:right;"><input type="submit" value="Upload" /></div>
 </form>
 
 
