@@ -189,6 +189,8 @@ def configure_celeryd_init_script():
     sudo('mv %(project_path)s/cdnmanager/celeryd /etc/init.d/' % env)
     sudo('chmod +x /etc/init.d/celeryd')
     sudo('update-rc.d celeryd defaults')
+    # Restart celeryd
+    sudo('/etc/init.d/celeryd restart')
 
 def reload_apache():
     sudo('touch %(project_path)s/cdnmanager/cdnmanager/django.wsgi' % env)
