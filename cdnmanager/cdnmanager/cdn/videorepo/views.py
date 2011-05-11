@@ -129,7 +129,13 @@ def add_project(request, project_id=None):
                 video_project.save()
                 policy_project_formset.save()
             else:
+                project_form = VideoProjectForm(instance=vproject)
+                policy_formset = policy_project_formset
                 logging.debug('policy_project_form is invalid')
+                return render_to_response('project_form.html',
+                                          {'project_form': project_form,
+                                           'policy_formset': policy_formset,
+                         }, context_instance=RequestContext(request))
         else:
             logging.debug('video_project_form is invalid')
 

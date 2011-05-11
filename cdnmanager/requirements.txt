@@ -9,3 +9,4 @@ ftputil
 celery
 django-celery
 paramiko
+django-piston==0.2.2

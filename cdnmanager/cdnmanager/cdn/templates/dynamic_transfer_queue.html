@@ -1,6 +1,40 @@
 {% extends "baseapp.html" %}
 
+{% block javascript %}
+{% comment %}
+{{ policy_formset.media }}
+{% endcomment %}
+<script type="text/javascript" src="/static/js/jquery/jquery-1.5.2.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){
+    var update_field = function($field_id,$data) {
+        $('#status-' + $field_id).html($data)
+    };
+
+    var update_transfer_status_fields = function() {
+        $('.transfer').each(function(){
+            var queue_id = $(this).attr('id').replace('queue-',''); 
+            $.ajax({
+                url: '/api/queue/' + queue_id + '/',
+                success: function(item){
+                    update_field(queue_id, item.transfer_status);
+//                    $('#status-' + queue_id).html('--------')
+//                    alert(item.transfer_status)
+                }
+            });
+        })
+    };
+    
+    $('#update').click(function(){
+        update_transfer_status_fields();
+    });
+})
+</script>
+
+{% endblock %}
+
 {% block baseapp %}
+<a id='update' href="#">Update Fields</a>
 <table id="transfer_queue">
         <tr>
             <td>File Name Short</td>
@@ -11,13 +45,13 @@
             <td>Transfer Status</td>
         </tr>
     {% for q in queue %}
-        <tr>
+        <tr id="queue-{{ q.id }}" class="transfer">
             <td>{{ q.video_file.file_name_short }}</td>
             <td>{{ q.server.node_name }}</td>
             <td>{{ q.server.ip_address }}</td>
             <td>{{ q.video_file.file_size }}</td>
             <td>{{ q.transfer_method }}</td>
-            <td>{{ q.transfer_status }}</td>
+            <td id="status-{{ q.id }}">{{ q.transfer_status }}</td>
         </tr>
     {% endfor %}
 </table>

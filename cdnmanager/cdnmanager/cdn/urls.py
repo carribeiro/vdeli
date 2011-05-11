@@ -36,5 +36,8 @@ urlpatterns = patterns('',
     url(r'^$', 'videorepo.views.main', name='main_page'),
     url(r'^projects/add/$', 'videorepo.views.add_project', name='add_project'),
 
+    # API
+    (r'^api/', include('api.urls')),
+
 ) + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
