@@ -146,7 +146,8 @@ def add_project(request, project_id=None):
 
 @login_required
 def transfer_queue(request):
-    main_form = MainForm() # An unbound form
+    kwargs = {'user': request.user}
+    main_form = MainForm(**kwargs) # An unbound form
     return render_to_response('transfer_queue.html', {
         'main_form': main_form,
     }, context_instance=RequestContext(request))
