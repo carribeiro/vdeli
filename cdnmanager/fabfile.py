@@ -201,7 +201,7 @@ def configure_wsgi_script():
     sed('%(project_path)s/cdnmanager/cdnmanager/django.wsgi' % env, '_VDELIHOME_', '%(project_path)s' % env)
 
 def set_permissions():
-    sudo('chmod 0777 %(project_path)s/cdnmanager/cdnmanager/cdn/uploads' % env)
+    sudo('chmod 0777 %(project_path)s/cdnmanager/cdnmanager/cdn/uploads' % env, user=env.user)
 
 def update(update_requirements=False):
     with cd(env.project_path):
