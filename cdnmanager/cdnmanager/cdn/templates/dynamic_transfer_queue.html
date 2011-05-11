@@ -2,6 +2,14 @@
 
 {% block baseapp %}
 <table id="transfer_queue">
+        <tr>
+            <td>File Name Short</td>
+            <td>Node Name</td>
+            <td>IP Address</td>
+            <td>File Size</td>
+            <td>Transfer Method</td>
+            <td>Transfer Status</td>
+        </tr>
     {% for q in queue %}
         <tr>
             <td>{{ q.video_file.file_name_short }}</td>
