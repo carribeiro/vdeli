@@ -193,7 +193,7 @@ def configure_celeryd_init_script():
     sudo('/etc/init.d/celeryd restart')
 
 def reload_apache():
-    sudo('touch %(project_path)s/cdnmanager/cdnmanager/django.wsgi' % env)
+    sudo('touch %(project_path)s/cdnmanager/cdnmanager/django.wsgi' % env, user=env.user)
 
 def configure_wsgi_script():
     run('cp %(project_path)s/cdnmanager/local_scripts/django.wsgi %(project_path)s/cdnmanager/cdnmanager/' % env)
