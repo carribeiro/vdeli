@@ -14,7 +14,7 @@ from celery.execute import send_task
 
 from forms import MainForm
 from videorepo.forms import VideoProjectForm, ProjectPolicyFormSet, PolicyProjectForm
-from videorepo.models import VideoProject
+from videorepo.models import VideoProject, TransferQueue
 from django.core.urlresolvers import reverse
 
 def user_login(request):
@@ -166,3 +166,9 @@ def transfer_queue_grid_config(request):
     grid = TransferQueueGrid(request.user)
     return HttpResponse(grid.get_config(), mimetype="application/json")
 
+@login_required
+def dynamic_transfer_queue(request):
+    queue = TransferQueue.objects.all()
+    return render_to_response('dynamic_transfer_queue.html', {
+        'queue': queue,
+    }, context_instance=RequestContext(request))

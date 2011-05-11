@@ -1,0 +1,18 @@
+{% extends "baseapp.html" %}
+
+{% block baseapp %}
+<table id="transfer_queue">
+    {% for q in queue %}
+        <tr>
+            <td>{{ q.video_file.file_name_short }}</td>
+            <td>{{ q.server.node_name }}</td>
+            <td>{{ q.server.ip_address }}</td>
+            <td>{{ q.video_file.file_size }}</td>
+            <td>{{ q.transfer_method }}</td>
+            <td>{{ q.transfer_status }}</td>
+        </tr>
+    {% endfor %}
+</table>
+<div id="pager"></div>
+
+{% endblock %}
