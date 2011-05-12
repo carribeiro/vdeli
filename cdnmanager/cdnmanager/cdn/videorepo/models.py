@@ -114,6 +114,7 @@ class TransferQueue(models.Model):
     max_simultaneous_segments = models.IntegerField()
     segment_size_kb = models.IntegerField()
     max_bandwidth_kbps = models.IntegerField()
+    percentage_transferred = models.IntegerField(default=0)
 
     # todo: transferqueue also has to refer to the policy and region because the same 
     # server can be found in several regions/policies.

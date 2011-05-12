@@ -154,7 +154,15 @@ def process_transfer_queue():
                 except:
                     pass
                 try:
-                    print "sftp" % sftp.put(source, destination)
+
+                    def transfer_callback(bytes_transferred, bytes_total, tq=tq):
+                        try:
+                            tq.percentage_transferred = int(bytes_transferred / bytes_total)
+                        except:
+                            tq.percentage_transferred = 0
+                        tq.save
+
+                    print "sftp" % sftp.put(source, destination, callback=transfer_callback)
                 except:
                     pass
             except:
