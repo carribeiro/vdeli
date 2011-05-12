@@ -7,6 +7,7 @@ from django.core.paginator import Paginator, EmptyPage, InvalidPage
 
 class TransferStatHandler(BaseHandler):
     allowed_methods = ('GET',)
+    fields = ('id', 'transfer_status', 'percentage_transferred')
     model = TransferQueue
 
     def read(self, request, queue_id=None):
@@ -24,7 +25,7 @@ class TransferStatHandler(BaseHandler):
                 page = 1
 
             queue_list = TransferQueue.objects.all()
-            p = Paginator(queue_list, 1)
+            p = Paginator(queue_list, 10)
 
             try:
                 page = int(request.GET.get('page', 1))

@@ -9,39 +9,38 @@
 $(document).ready(function(){
 
     var getUrlPage = function() {
-        var vars = {};
-        var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m,key,value) {
-            vars[key] = value;
-        });
-        if (vars['page'] == null){
-            vars['page'] = 1
-        }
-        
-        return vars.page;
+       return $('#page_number').html();
     }
 
 //    alert(getUrlPage())
 
-    var update_field = function($field_id,$data) {
-        $('#status-' + $field_id).html($data)
+    var update_field = function($field_id,$status,$percentage) {
+        $('#status-' + $field_id).html($status)
+        $('#percentage-' + $field_id).html($percentage)
     };
 
-    var update_transfer_status_fields = function() {
-        $('.transfer').each(function(){
-            var queue_id = $(this).attr('id').replace('queue-',''); 
-            $.ajax({
-                url: '/api/queue/' + queue_id + '/',
-                success: function(item){
-                    update_field(queue_id, item.transfer_status);
-//                    $('#status-' + queue_id).html('--------')
-//                    alert(item.transfer_status)
-                }
-            });
+    var parse_update_fields = function($response) {
+        $.each($response, function(k, v) {
+            update_field(v.id, v.transfer_status);
+        });
+    }
+
+    var update_transfer_status = function() {
+        // Get page number
+        var page = getUrlPage();
+        data = {'page': page}
+        $.ajax({
+            url: '{% url trasnfer_status_queue %}',
+            data: data,
+            success: function(item){
+                parse_update_fields(item);
+            },
         })
-    };
-    
+    }
+
     $('#update').click(function(){
-        update_transfer_status_fields();
+        update_transfer_status();
+//        update_transfer_status_fields_all();
     });
 })
 </script>
@@ -57,6 +56,7 @@ $(document).ready(function(){
             <td>IP Address</td>
             <td>File Size</td>
             <td>Transfer Method</td>
+            <td>Transfered %</td>
             <td>Transfer Status</td>
         </tr>
     {% for q in queue.object_list %}
@@ -66,6 +66,7 @@ $(document).ready(function(){
             <td>{{ q.server.ip_address }}</td>
             <td>{{ q.video_file.file_size }}</td>
             <td>{{ q.transfer_method }}</td>
+            <td id="percentage-{{ q.id }}">{{ q.percentage_transferred }}</td>
             <td id="status-{{ q.id }}">{{ q.transfer_status }}</td>
         </tr>
     {% endfor %}
@@ -78,7 +79,7 @@ $(document).ready(function(){
         {% endif %}
 
         <span class="current">
-            Page {{ queue.number }} of {{ queue.paginator.num_pages }}.
+            Page <span id="page_number">{{ queue.number }}</span> of {{ queue.paginator.num_pages }}.
         </span>
 
         {% if queue.has_next %}

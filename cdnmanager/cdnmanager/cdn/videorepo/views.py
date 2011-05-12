@@ -176,7 +176,7 @@ def transfer_queue_grid_config(request):
 @login_required
 def dynamic_transfer_queue(request):
     queue_list = TransferQueue.objects.all()
-    p = Paginator(queue_list, 1)
+    p = Paginator(queue_list, 10)
 
     try:
         page = int(request.GET.get('page', 1))
