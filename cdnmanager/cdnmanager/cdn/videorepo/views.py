@@ -16,6 +16,7 @@ from forms import MainForm
 from videorepo.forms import VideoProjectForm, ProjectPolicyFormSet, PolicyProjectForm
 from videorepo.models import VideoProject, TransferQueue
 from django.core.urlresolvers import reverse
+from django.core.paginator import Paginator, EmptyPage, InvalidPage
 
 def user_login(request):
     if request.method == 'POST':
@@ -174,7 +175,19 @@ def transfer_queue_grid_config(request):
 
 @login_required
 def dynamic_transfer_queue(request):
-    queue = TransferQueue.objects.all()
+    queue_list = TransferQueue.objects.all()
+    p = Paginator(queue_list, 1)
+
+    try:
+        page = int(request.GET.get('page', 1))
+    except ValueError:
+        page = 1
+
+    try:
+        queue = p.page(page)
+    except (EmptyPage, InvalidPage):
+        queue = p.page(p.num_pages)
+
     return render_to_response('dynamic_transfer_queue.html', {
         'queue': queue,
     }, context_instance=RequestContext(request))

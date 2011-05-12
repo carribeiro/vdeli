@@ -7,6 +7,21 @@
 <script type="text/javascript" src="/static/js/jquery/jquery-1.5.2.js"></script>
 <script type="text/javascript">
 $(document).ready(function(){
+
+    var getUrlPage = function() {
+        var vars = {};
+        var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m,key,value) {
+            vars[key] = value;
+        });
+        if (vars['page'] == null){
+            vars['page'] = 1
+        }
+        
+        return vars.page;
+    }
+
+//    alert(getUrlPage())
+
     var update_field = function($field_id,$data) {
         $('#status-' + $field_id).html($data)
     };
@@ -44,7 +59,7 @@ $(document).ready(function(){
             <td>Transfer Method</td>
             <td>Transfer Status</td>
         </tr>
-    {% for q in queue %}
+    {% for q in queue.object_list %}
         <tr id="queue-{{ q.id }}" class="transfer">
             <td>{{ q.video_file.file_name_short }}</td>
             <td>{{ q.server.node_name }}</td>
@@ -55,6 +70,21 @@ $(document).ready(function(){
         </tr>
     {% endfor %}
 </table>
-<div id="pager"></div>
+
+<div class="pagination">
+    <span class="step-links">
+        {% if queue.has_previous %}
+            <a href="?page={{ queue.previous_page_number }}">previous</a>
+        {% endif %}
+
+        <span class="current">
+            Page {{ queue.number }} of {{ queue.paginator.num_pages }}.
+        </span>
+
+        {% if queue.has_next %}
+            <a href="?page={{ queue.next_page_number }}">next</a>
+        {% endif %}
+    </span>
+</div>
 
 {% endblock %}
