@@ -203,7 +203,7 @@ def configure_wsgi_script():
 def set_permissions():
     sudo('chmod 0777 %(project_path)s/cdnmanager/cdnmanager/cdn/uploads' % env, user=env.user)
 
-def update(update_requirements=False):
+def update(update_requirements=False, syncdb=False):
     with cd(env.project_path):
         # checkout changes
         sudo('git checkout .', user=env.user)
@@ -216,6 +216,10 @@ def update(update_requirements=False):
     if update_requirements:
         with virtualenv():
             sudo('pip install -U -r %(project_path)s/cdnmanager/requirements.txt' % env, user=env.user)
+
+    if syncdb:
+        with virtualenv():
+            run('python %(project_path)s/cdnmanager/cdnmanager/cdn/manage.py migrate --all --no-initial-data' % env)
 
     configure_wsgi_script()
     set_permissions()
