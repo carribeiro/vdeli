@@ -15,7 +15,7 @@ DEFAULT_HOST_LOCALDEV = 'localhost'
 DEFAULT_USER_LOCALDEV = env.user
 
 DEFAULT_PATH_SERVER = '/srv'
-DEFAULT_HOSTIP_SERVER = '187.1.90.4'
+DEFAULT_HOSTIP_SERVER = '' #'187.1.90.4'
 DEFAULT_HOSTNAME_SERVER = 'cdnserver.cdn.telbrax.net.br'
 DEFAULT_USER_SERVER = 'vdeliadmin'
 DEFAULT_CDN_MANAGER_SERVER = '187.1.90.3'
@@ -50,7 +50,9 @@ def localhost(path=DEFAULT_PATH_LOCALDEV, user=DEFAULT_USER_LOCALDEV,
 def cdnserver(path=DEFAULT_PATH_SERVER, user=DEFAULT_USER_SERVER, host=DEFAULT_HOSTIP_SERVER):
     """ Deploy to a dedicated webserver (can be staging or production) """
     env.hosts = [host] # always deploy to a single host
+    env.hosts = ['187.1.90.5','187.1.90.6','187.1.90.7','187.1.90.8',]
     env.user = user
+    env.password = 'vDe11Admin'
     env.path = path # do not perform path substitution on the server.
                     # it's not really needed and it is safer this way.
     env.project_path = '%(path)s/%(prj_name)s' % env

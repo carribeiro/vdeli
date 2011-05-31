@@ -30,7 +30,7 @@ $(document).ready(function(){
         var page = getUrlPage();
         data = {'page': page}
         $.ajax({
-            url: '{% url trasnfer_status_queue %}',
+            url: '{% url transfer_status_queue %}',
             data: data,
             success: function(item){
                 parse_update_fields(item);
@@ -42,6 +42,20 @@ $(document).ready(function(){
         update_transfer_status();
 //        update_transfer_status_fields_all();
     });
+
+    setTimeout(refresh_status, 1000);
+    function refresh_status() {
+        $.ajax({
+            url: '{% url transfer_status_queue %}',
+            data: {'page': getUrlPage()},
+            success: function(item) {
+                parse_update_fields(item);
+            },
+            complete: function() {
+                setTimeout(refresh_status, 1000);
+            }
+        })
+    }
 })
 </script>
 
