@@ -97,6 +97,7 @@ class VideoFileImporter(Task):
                         max_simultaneous_segments=policy.max_simultaneous_segments,
                         segment_size_kb=policy.segment_size_kb,
                         max_bandwidth_kbps=policy.max_bandwidth_per_segment_kbps
+                        percentage_transferred=0,
                         )
                     tq.save()
             finally:
