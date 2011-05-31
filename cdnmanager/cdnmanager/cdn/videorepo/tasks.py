@@ -161,7 +161,7 @@ def process_transfer_queue():
                             tq.percentage_transferred = int(bytes_transferred / bytes_total)
                         except:
                             tq.percentage_transferred = 0
-                        tq.save
+                        tq.save()
 
                     print "sftp" % sftp.put(source, destination, callback=transfer_callback)
                 except:
@@ -169,11 +169,11 @@ def process_transfer_queue():
             except:
                 error = 'SFTP put failed'
             finally:
-                sftp.close
+                sftp.close()
         except:
             error = 'connect failed'
         finally:
-            transport.close
+            transport.close()
         tq.transfer_status = 'transferred'
         tq.save()
     except:
