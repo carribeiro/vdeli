@@ -158,7 +158,7 @@ def process_transfer_queue():
 
                     def transfer_callback(bytes_transferred, bytes_total, tq=tq):
                         try:
-                            tq.percentage_transferred = int(bytes_transferred / bytes_total)
+                            tq.percentage_transferred = int((100.0 * bytes_transferred) / bytes_total)
                         except:
                             tq.percentage_transferred = 0
                         tq.save()

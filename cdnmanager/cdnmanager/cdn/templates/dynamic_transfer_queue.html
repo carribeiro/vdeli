@@ -80,7 +80,7 @@ $(document).ready(function(){
             <td>{{ q.server.ip_address }}</td>
             <td>{{ q.video_file.file_size }}</td>
             <td>{{ q.transfer_method }}</td>
-            <td id="percentage-{{ q.id }}">{{ q.percentage_transferred }}</td>
+            <td id="percentage-{{ q.id }}">{{ q.percentage_transferred }}%</td>
             <td id="status-{{ q.id }}">{{ q.transfer_status }}</td>
         </tr>
     {% endfor %}
