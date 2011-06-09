@@ -6,6 +6,8 @@ from django.core.cache import cache
 from django.utils.hashcompat import md5_constructor as md5
 from models import VideoFile, TransferQueue
 from django.contrib.auth.models import User
+from videorepo.models import CDNServer
+import celery.task
 
 LOCK_EXPIRE = 60 * 5 # Lock expires in 5 minutes
 
@@ -48,7 +50,7 @@ class VideoFileImporter(Task):
                     # path is not inside MEDIA_ROOT
                     logger.debug("Video file %s is not inside the file repository and cannot be distributed" % video_file_name)
                     return
-                    
+
                 # test the publisher
                 try:
                     publisher = User.objects.get(username=path_elements[0])
@@ -89,9 +91,9 @@ class VideoFileImporter(Task):
                     print "vf %d: server:%s, region:%s, transfer:%s" % (
                         video_file.id, server.node_name, policy.cdnregion.region_name, policy.transfer_method)
                     tq = TransferQueue(
-                        video_file=video_file, 
-                        server=server, 
-                        transfer_method=policy.transfer_method, 
+                        video_file=video_file,
+                        server=server,
+                        transfer_method=policy.transfer_method,
                         transfer_status="not scheduled",
                         protocol=policy.protocol,
                         max_simultaneous_segments=policy.max_simultaneous_segments,
@@ -183,3 +185,29 @@ def process_transfer_queue():
     #ssh = paramiko.SSHClient()
     #ssh.connect(server.ip_address, username=username, password=password)
     #ssh_stdin, ssh_stdout, ssh_stderr = ssh_session.exec_command("ftpget ")
+
+@celery.task()
+def copy_nginx_logfiles():
+    # do one single transfer
+    import paramiko
+    import datetime
+#    host = tq.server.ip_address
+    username = 'vdeliadmin'
+    password = 'vDe11Admin'
+    port = 22
+    for srv in CDNServer.objects.all():
+        host = srv.ip_address
+        log_prefix = datetime.datetime.now().strftime('%Y%m%d')
+        filename = '%s.access.log-%s.gz' % (host, log_prefix)
+        filepath = '/var/log/nginx/%s' % filename
+        print "Trying to connect to host %s:%d" % (host, port)
+        print "SFTP %s -> %s" % (filepath, './')
+        error = 'unknown error'
+        transport = paramiko.Transport((host, port))
+        try:
+            transport.connect(username=username, password=password)
+            sftp = paramiko.SFTPClient.from_transport(transport)
+        except:
+            error = 'connect failed'
+
+
