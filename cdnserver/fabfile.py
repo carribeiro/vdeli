@@ -1,33 +1,39 @@
 from fabric.state import env
-from cuisine.cuisine import *
+from cuisine import *
 
 
 
 
 DEFAULT_PATH = '/srv'
 
-env.user = 'vdeliadmin'
+#env.user = 'vdeliadmin'
 env.prj_name = 'vdeli' # no spaces!
 
-def variables(hosts='localhost', user=None, path=DEFAULT_PATH):
+def variables(user=None, path=DEFAULT_PATH):
     if user:
         env.user = user
-    env.hosts = [hosts]
+    else:
+        env.user = 'vdeliadmin'
     env.path = path % env  # allows substitution of the %(env.user)s attribute. 
                            # however any attribute in env can be used. we must
                            # check whether this opens a security hole or not, 
                            # depending on what is in the env dictionary
     env.project_path = '%(path)s/%(prj_name)s' % env
 
-#def test():
-#    if file_exists('/etc/sysctl.conf'):
-#        print 'Test OK!'
+def test():
+    h = run('hostname')
+    d = run('domainname')
+    if d != '(none)':
+        servername = '%s.%s' % (h,d)
+    else:
+        servername = h
+    print servername
 
 def update_logrotate(text):
     res = []
     for line in text.split('\n'):
         if line.strip().startswith('/var/log/nginx/*.log {'):
-            res.append('/var/log/nginx/*.log {\n        dateext')
+            res.append('/var/log/nginx/*.log {\n\tdateext')
         # We don't want to wait next rotation. Compress all files
         elif line.strip().startswith('delaycompress'):
             pass
@@ -36,8 +42,15 @@ def update_logrotate(text):
     return '\n'.join(res)
 
 def install_nginx():
-    if not dir_exists('/etc/nginx'):
-        package_install('nginx')
+    package_ensure('nginx')
+    # Prepare a servername
+    h = run('hostname')
+    d = run('domainname')
+    if d != '(none)':
+        servername = '%s.%s' % (h,d)
+    else:
+        servername = h
+
     # Create nginx conf
     conf = text_template(text_strip_margin(
         """
@@ -54,7 +67,7 @@ def install_nginx():
         """
         ), dict(
             HOST=env.host_string,
-            SERVER_NAME=env.host_string,
+            SERVER_NAME=servername,
             PROJECT_PATH=env.project_path
             )
     )
@@ -74,3 +87,10 @@ def install_nginx():
         '/etc/logrotate.d/nginx',
         update_logrotate
     )
+    
+    # Run nginx
+    run('service nginx start')
+
+def create_user():
+    mode_sudo()
+    user_ensure('vdeliadmin', passwd='vDe11Admin')

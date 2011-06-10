@@ -7,7 +7,6 @@ from django.utils.hashcompat import md5_constructor as md5
 from models import VideoFile, TransferQueue
 from django.contrib.auth.models import User
 from videorepo.models import CDNServer
-import celery.task
 
 LOCK_EXPIRE = 60 * 5 # Lock expires in 5 minutes
 
@@ -186,7 +185,7 @@ def process_transfer_queue():
     #ssh.connect(server.ip_address, username=username, password=password)
     #ssh_stdin, ssh_stdout, ssh_stderr = ssh_session.exec_command("ftpget ")
 
-@celery.task()
+@task
 def copy_nginx_logfiles():
     # do one single transfer
     import paramiko
@@ -195,19 +194,35 @@ def copy_nginx_logfiles():
     username = 'vdeliadmin'
     password = 'vDe11Admin'
     port = 22
+    destination = '/srv/vdeli/cdnmanager/data'
+#    destination = '/home/unit/PROJECTS/vdeli/cdnmanager/data'
     for srv in CDNServer.objects.all():
         host = srv.ip_address
         log_prefix = datetime.datetime.now().strftime('%Y%m%d')
-        filename = '%s.access.log-%s.gz' % (host, log_prefix)
+        filename = '%s.access.log-%s.gz' % (srv.node_name, log_prefix)
         filepath = '/var/log/nginx/%s' % filename
+        destination = '%s/%s' % (destination, filename)
         print "Trying to connect to host %s:%d" % (host, port)
         print "SFTP %s -> %s" % (filepath, './')
-        error = 'unknown error'
+        error = None
         transport = paramiko.Transport((host, port))
         try:
             transport.connect(username=username, password=password)
             sftp = paramiko.SFTPClient.from_transport(transport)
         except:
             error = 'connect failed'
+
+        try:
+            sftp.get(filepath, destination)
+            sftp.close()
+            transport.close()
+        except IOError:
+            error = 'remote or local filepath is wrong'
+        
+        if error is not None:
+            print error
+            return False
+        else:
+            return True
 
 

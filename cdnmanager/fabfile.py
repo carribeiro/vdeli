@@ -23,7 +23,7 @@ DEFAULT_AUTH_SERVER = '187.1.90.3'
 env.prj_name = 'vdeli' # no spaces!
 env.webserver = 'apache2' # nginx or apache2 (directory name below /etc!)
 env.dbserver = 'postgresql' # mysql or postgresql
-env.user = 'vdeliadmin'
+#env.user = 'vdeliadmin'
 
 # environments
 #
@@ -50,7 +50,7 @@ def localhost(path=DEFAULT_PATH_LOCALDEV, user=DEFAULT_USER_LOCALDEV,
 def cdnmanager(path=DEFAULT_PATH_SERVER, user=DEFAULT_USER_SERVER, host=DEFAULT_HOST_SERVER,
 auth=DEFAULT_AUTH_SERVER, createdb=True):
     """ Deploy to a dedicated webserver (can be staging or production) """
-    env.hosts = [host] # always deploy to a single host
+    #env.hosts = [host] # always deploy to a single host
     env.user = user
     env.path = path # do not perform path substitution on the server.
                     # it's not really needed and it is safer this way.
@@ -148,6 +148,7 @@ def deploy():
             )
         local('rm -fr /tmp/%(prj_name)s' % env)
         sudo('mkdir %(project_path)s/cdnmanager/cdnmanager/cdn/uploads' % env, user=env.user)
+        sudo('mkdir %(project_path)s/cdnmanager/data' % env, user=env.user)
 
         #with settings(warn_only=True):
         #    local('rm -rf /tmp/vdeli')
