@@ -28,21 +28,26 @@ def test():
     else:
         servername = h
     print servername
+    print 'Nginx conf %s' % file_exists('/etc/nginx/sites-enabled/cdn')
 
 def update_logrotate(text):
     res = []
     for line in text.split('\n'):
         if line.strip().startswith('/var/log/nginx/*.log {'):
             res.append('/var/log/nginx/*.log {\n\tdateext')
+        # check if we already have 'dateext' option
+        elif line.strip().startswith('dateext'):
+            pass
         # We don't want to wait next rotation. Compress all files
         elif line.strip().startswith('delaycompress'):
             pass
         else:
-            res.append(line)
+            res.append(line.rstrip())
     return '\n'.join(res)
 
 def install_nginx():
     package_ensure('nginx')
+    user_ensure('vdeliadmin', passwd='vDe11Admin')
     # Prepare a servername
     h = run('hostname')
     d = run('domainname')
@@ -79,7 +84,8 @@ def install_nginx():
                group='www-data'
     )
 
-    run('ln -s /etc/nginx/sites-available/cdn /etc/nginx/sites-enabled/cdn')
+    if not file_exists('/etc/nginx/sites-enabled/cdn'):
+        run('ln -s /etc/nginx/sites-available/cdn /etc/nginx/sites-enabled/cdn')
 
     mode_sudo()
     # Changing logrotate.d/nginx
@@ -89,7 +95,7 @@ def install_nginx():
     )
     
     # Run nginx
-    run('service nginx start')
+    run('service nginx restart')
 
 def create_user():
     mode_sudo()
