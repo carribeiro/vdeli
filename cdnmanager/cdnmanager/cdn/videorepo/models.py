@@ -191,3 +191,46 @@ class ProjectPolicy(models.Model):
     def __unicode__(self):
         return "Policy:%s, project:%s, region:%s, user: %s" % (
             self.id, self.video_project.name, self.cdnregion.region_name, self.video_project.user.username)
+
+class Logfile(models.Model):
+   """ (I’ll have to fix these quotes later :-/)
+   Logfile is used to track the status of the logfiles retrieved from the
+   CDNservers. A new Logfile entry is created by a periodic task, before
+   copying the logfile to the cdnmanager.
+
+   - We should really be careful about timezones. Each server is configured
+     to it’s own timezone. At 00:00 localtime the logfile is rotated. The
+     cdnmanager needs to copy the logfile after it is rotated. As we may
+     have several severs in different timezones, the cdnmanager must check
+     it every hour.
+
+   - Possible status:
+     notcopied   The logfile entry was created but the file copy has
+                 not started yet. If the filecopy fails, the logfile entry
+                 reverts to this status.
+     copying     This status is set during the logfile copy.
+     copied      Right after finishing the copy, and before starting the
+                 filtering process.
+     filtering   After copying the logfile, it has to be filtered. We
+                 need to to separate the lines by customer in order to
+                 generate the “per customer log file”.
+     completed   The logfile was copied and filtered.
+     ignore      Used to mark a file that should not be copied. For instance,
+                 if we know that a server had a problem or something like
+                 that, we can just set the status to ‘ignore’.
+   """
+   server = models.ForeignKey('CDNServer')
+   status = models.CharField(max_length=10)
+   log_length = models.IntegerField()  # total length in chars
+   log_lines = models.IntegerField()   # total lines
+
+   # log the date&time when the logfile entry was created
+   creation_time = models.DateTimeField(_('Creation Time'), auto_now=True)
+
+   # log the date&time when the filecopy was finished
+   copy_time = models.DateTimeField(_('Copy Time'), null=True)
+
+   # last_error_msg is a string that can be used to write any message
+   # about the last error that happened, for instance: logfile does not
+   # exist at the server, sftp timeout, empty file, etc.
+   last_error_msg = models.CharField(max_length=100)
