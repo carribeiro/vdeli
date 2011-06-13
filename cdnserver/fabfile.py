@@ -45,6 +45,18 @@ def update_logrotate(text):
             res.append(line.rstrip())
     return '\n'.join(res)
 
+def update_nginx_conf(text):
+    res = []
+    for line in text.split('\n'):
+        if line.strip().startswith('user www-data;'):
+            res.append('user www-data;\nenv TZ=UTC;')
+        # check if we already have 'dateext' option
+        elif line.strip().startswith('env TZ=UTC;'):
+            pass
+        else:
+            res.append(line.rstrip())
+    return '\n'.join(res)
+
 def install_nginx():
     package_ensure('nginx')
     user_ensure('vdeliadmin', passwd='vDe11Admin')
@@ -93,7 +105,14 @@ def install_nginx():
         '/etc/logrotate.d/nginx',
         update_logrotate
     )
-    
+
+    mode_sudo()
+    # Changing logrotate.d/nginx
+    file_update(
+        '/etc/nginx/nginx.conf',
+        update_nginx_conf
+    )
+
     # Run nginx
     run('service nginx restart')
 
