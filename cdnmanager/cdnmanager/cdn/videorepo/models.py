@@ -235,5 +235,5 @@ class Logfile(models.Model):
     # exist at the server, sftp timeout, empty file, etc.
     last_error_msg = models.CharField(max_length=100)
 
-    timezone = models.IntegerField(_('Time Zone'), default=0)
+    #timezone = models.IntegerField(_('Time Zone'), default=0)
     copy_retry_count = models.IntegerField(_('Retries Counter'), default=0)
