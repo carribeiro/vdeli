@@ -8,20 +8,14 @@ class Migration(SchemaMigration):
 
     def forwards(self, orm):
         
-        # Adding field 'Logfile.timezone'
-        db.add_column('videorepo_logfile', 'timezone', self.gf('django.db.models.fields.IntegerField')(default=0), keep_default=False)
-
-        # Adding field 'Logfile.copy_retry_count'
-        db.add_column('videorepo_logfile', 'copy_retry_count', self.gf('django.db.models.fields.IntegerField')(default=0), keep_default=False)
+        # Adding field 'CDNServer.timezone'
+        db.add_column('videorepo_cdnserver', 'timezone', self.gf('django.db.models.fields.CharField')(default='America/Sao_Paulo', max_length=100), keep_default=False)
 
 
     def backwards(self, orm):
         
-        # Deleting field 'Logfile.timezone'
-        db.delete_column('videorepo_logfile', 'timezone')
-
-        # Deleting field 'Logfile.copy_retry_count'
-        db.delete_column('videorepo_logfile', 'copy_retry_count')
+        # Deleting field 'CDNServer.timezone'
+        db.delete_column('videorepo_cdnserver', 'timezone')
 
 
     models = {
@@ -72,7 +66,8 @@ class Migration(SchemaMigration):
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'ip_address': ('django.db.models.fields.IPAddressField', [], {'max_length': '15'}),
             'node_name': ('django.db.models.fields.CharField', [], {'max_length': '60'}),
-            'server_port': ('django.db.models.fields.IntegerField', [], {})
+            'server_port': ('django.db.models.fields.IntegerField', [], {}),
+            'timezone': ('django.db.models.fields.CharField', [], {'default': "'Brazil/East'", 'max_length': '100'})
         },
         'videorepo.logfile': {
             'Meta': {'object_name': 'Logfile'},
@@ -84,8 +79,7 @@ class Migration(SchemaMigration):
             'log_length': ('django.db.models.fields.IntegerField', [], {}),
             'log_lines': ('django.db.models.fields.IntegerField', [], {}),
             'server': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['videorepo.CDNServer']"}),
-            'status': ('django.db.models.fields.CharField', [], {'max_length': '10'}),
-            'timezone': ('django.db.models.fields.IntegerField', [], {'default': '0'})
+            'status': ('django.db.models.fields.CharField', [], {'max_length': '10'})
         },
         'videorepo.projectpolicy': {
             'Meta': {'object_name': 'ProjectPolicy'},

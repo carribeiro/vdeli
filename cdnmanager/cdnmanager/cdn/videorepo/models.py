@@ -4,13 +4,25 @@ import os.path
 import time
 import datetime
 import settings
+import pytz
 
 from django.db import models
 from django.utils.translation import ugettext as _
 from django.contrib.auth.models import User
+from django.utils.encoding import smart_str
 
 
 # Create your models here.
+
+MAX_TIMEZONE_LENGTH = getattr(settings, "MAX_TIMEZONE_LENGTH", 100)
+ALL_TIMEZONE_CHOICES = tuple(zip(pytz.all_timezones, pytz.all_timezones))
+COMMON_TIMEZONE_CHOICES = tuple(zip(pytz.common_timezones, pytz.common_timezones))
+PRETTY_TIMEZONE_CHOICES = []
+
+
+for tz in pytz.common_timezones:
+    now = datetime.datetime.now(pytz.timezone(tz))
+    PRETTY_TIMEZONE_CHOICES.append((tz, "(UTC%s) %s" % (now.strftime("%z"), tz)))
 
 class VideoFile(models.Model):
     """
@@ -76,6 +88,48 @@ class SummaryLog(models.Model):
     total_transfer_mb = models.IntegerField()
     # interrupted_transfers = models.IntegerField()  # check if we have this info
 
+class CDNServerManager(models.Manager):
+
+    def adjust_datetime_to_timezone(self, value, from_tz, to_tz=None):
+        """
+    Given a ``datetime`` object adjust it according to the from_tz timezone
+    string into the to_tz timezone string.
+    """
+        if to_tz is None:
+            to_tz = settings.TIME_ZONE
+        if value.tzinfo is None:
+            if not hasattr(from_tz, "localize"):
+                from_tz = pytz.timezone(smart_str(from_tz))
+            value = from_tz.localize(value)
+        return value.astimezone(pytz.timezone(smart_str(to_tz)))
+
+    def localtime_for_timezone(self, value, timezone):
+        """
+    Given a ``datetime.datetime`` object in UTC and a timezone represented as
+    a string, return the localized time for the timezone.
+    """
+        return self.adjust_datetime_to_timezone(value, settings.TIME_ZONE, timezone)
+
+    def get_servers_by_localtime(self, time, offset=900):
+        '''
+        Returns a list of servers which has a giving localtime
+        with offset 15 minutes by default
+        @param time: time '%H:%M'
+        @param offset: time offset in seconds
+        '''
+        servers = []
+        now = datetime.datetime.now()
+        date = datetime.datetime.strptime(now.strftime('%Y-%m-%d') \
+            + ' %s:00' % time, '%Y-%m-%d %H:%M:%S')
+        for server in self.all():
+            t = self.localtime_for_timezone(datetime.datetime.now(),
+                        server.timezone).replace(tzinfo=None)
+            td = (t - date).seconds
+            if td < offset:
+                servers.append(server)
+
+        return servers
+
 class CDNServer(models.Model):
     """
     Represents a single CDN server.
@@ -83,10 +137,16 @@ class CDNServer(models.Model):
     ip_address = models.IPAddressField('Endereço IP')
     server_port = models.IntegerField('Porta do Servidor CDN')
     node_name = models.CharField('Nome do Nodo', max_length=60)
+    timezone = models.CharField(_('Time Zone'),
+                                max_length=MAX_TIMEZONE_LENGTH,
+                                choices=PRETTY_TIMEZONE_CHOICES,
+                                default=settings.TIME_ZONE)
     cdn_group = models.ForeignKey('CDNRegion')
 
     def __unicode__(self):
         return "%s (ip:%s, group:%s)" % (self.node_name, self.ip_address, self.cdn_group.region_name)
+
+    objects = CDNServerManager()
 
 # We will include a CDNCluster entity later. For now, every cluster has only one server.
 
