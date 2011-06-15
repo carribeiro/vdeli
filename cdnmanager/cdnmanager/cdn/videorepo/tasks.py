@@ -209,15 +209,22 @@ def copy_nginx_logfiles():
         try:
             transport.connect(username=username, password=password)
             sftp = paramiko.SFTPClient.from_transport(transport)
-        except:
-            error = 'connect failed'
 
-        try:
-            sftp.get(filepath, destination)
-            sftp.close()
-            transport.close()
-        except IOError:
-            error = 'remote or local filepath is wrong'
+            # Check the remote file exists
+            try:
+                sftp.stat(filepath)
+            except IOError:
+                error = 'Remote file doesn\'t exists'
+
+            # Copy a remote file
+            try:
+                sftp.get(filepath, destination)
+                sftp.close()
+                transport.close()
+            except IOError:
+                error = 'Local path is not a file or connection problem'
+        except:
+            error = 'Connection filed'
         
         if error is not None:
             print error
