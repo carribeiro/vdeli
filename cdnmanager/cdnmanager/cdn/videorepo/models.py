@@ -143,6 +143,11 @@ class CDNServer(models.Model):
                                 default=settings.TIME_ZONE)
     cdn_group = models.ForeignKey('CDNRegion')
 
+    # we use the default values that are hardcoded, mostly for development
+    # TODO: THIS HAS TO BE CHANGED BEFORE GOING INTO PRODUCTION
+    username = models.CharField(max_length=20, default='vdeliadmin')
+    password = models.CharField(max_length=20, default='vDe11Admin')
+
     def __unicode__(self):
         return "%s (ip:%s, group:%s)" % (self.node_name, self.ip_address, self.cdn_group.region_name)
 
@@ -280,10 +285,12 @@ class Logfile(models.Model):
                       that, we can just set the status to ‘ignore’.
     """
     server = models.ForeignKey('CDNServer')
-    status = models.CharField(max_length=10)
+    timestamp = models.CharField(max_length=8, null=False)
+    status = models.CharField(max_length=10, null=False)
+
     log_length = models.IntegerField()  # total length in chars
     log_lines = models.IntegerField()   # total lines
-
+    
     # log the date&time when the logfile entry was created
     creation_time = models.DateTimeField(_('Creation Time'), auto_now=True)
 
@@ -297,3 +304,13 @@ class Logfile(models.Model):
 
     #timezone = models.IntegerField(_('Time Zone'), default=0)
     copy_retry_count = models.IntegerField(_('Retries Counter'), default=0)
+
+    def filename(self):
+        return '%s.access.log-%s.gz' % (self.node_name, self.timestamp)
+
+    def cdnserver_filename(self):
+        return '/var/log/nginx/%s' % self.filename()
+
+    def cdnmanager_filename(self):
+        basedir = '/srv/vdeli/cdnmanager/data'
+        return '%s/%s' % (basedir, self.filename())
