@@ -6,7 +6,7 @@ from django.core.cache import cache
 from django.utils.hashcompat import md5_constructor as md5
 from models import VideoFile, TransferQueue
 from django.contrib.auth.models import User
-from videorepo.models import CDNServer
+from videorepo.models import CDNServer, Logfile
 
 LOCK_EXPIRE = 60 * 5 # Lock expires in 5 minutes
 
@@ -195,9 +195,9 @@ def copy_nginx_logfiles():
     # the logfiles are copied in a three step process
 
     # step 1: create all the Logfile entries, with status as 'notcopied'
-    timestamp = datetime.datetime.utcnow().strftime('%Y%m%d')
-    for server in CDNServer.objects.get_servers_by_localtime('00:15'):
-        logfile = Logfile(server=srv, status='notcopied', timestamp=timestamp)
+    dt = datetime.datetime.now()
+    for server in CDNServer.objects.get_servers_by_localtime('15:40'):
+        logfile = Logfile(server=server, status='notcopied', timestamp=CDNServer.objects.localtime_for_timezone(dt, server.timezone))
         logfile.save()
 
     # step 2: loop over all 'notcopied' logfiles. this will include all
@@ -206,7 +206,7 @@ def copy_nginx_logfiles():
     # copy_nginx_logfiles or manually) and that are still 'notcopied'.
     for logfile in Logfile.objects.filter(status='notcopied'):
         # retrieve the log file using paramiko
-        print "SFTP %s -> %s" % (filepath, './')
+        print "SFTP %s -> %s" % (logfile.cdnserver_filename(), logfile.cdnmanager_filename())
         error = None
         transport = paramiko.Transport((logfile.server.ip_address, port))
         try:
@@ -241,7 +241,7 @@ def copy_nginx_logfiles():
         else:
             # if the transfer is ok, set status of the logfile as "copied"
             logfile.status = 'copied'
-            logfile.last_error_msg = ''
+            logfile.last_error_msg = None
             logfile.save()
 
     # step 3: loop over all 'copied' logfiles. this will include logfiles

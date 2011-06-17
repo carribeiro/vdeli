@@ -285,11 +285,11 @@ class Logfile(models.Model):
                       that, we can just set the status to ‘ignore’.
     """
     server = models.ForeignKey('CDNServer')
-    timestamp = models.CharField(max_length=8, null=False)
+    timestamp = models.DateField(auto_now=False, auto_now_add=False, null=True)
     status = models.CharField(max_length=10, null=False)
 
-    log_length = models.IntegerField()  # total length in chars
-    log_lines = models.IntegerField()   # total lines
+    log_length = models.IntegerField(default=0)  # total length in chars
+    log_lines = models.IntegerField(default=0)   # total lines
     
     # log the date&time when the logfile entry was created
     creation_time = models.DateTimeField(_('Creation Time'), auto_now=True)
@@ -300,13 +300,13 @@ class Logfile(models.Model):
     # last_error_msg is a string that can be used to write any message
     # about the last error that happened, for instance: logfile does not
     # exist at the server, sftp timeout, empty file, etc.
-    last_error_msg = models.CharField(max_length=100)
+    last_error_msg = models.CharField(max_length=100, default='No Errors')
 
     #timezone = models.IntegerField(_('Time Zone'), default=0)
     copy_retry_count = models.IntegerField(_('Retries Counter'), default=0)
 
     def filename(self):
-        return '%s.access.log-%s.gz' % (self.node_name, self.timestamp)
+        return '%s.access.log-%s.gz' % (self.node_name, self.timestamp.strftime('%Y%m%d'))
 
     def cdnserver_filename(self):
         return '/var/log/nginx/%s' % self.filename()
