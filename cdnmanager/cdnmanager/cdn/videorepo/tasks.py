@@ -196,7 +196,7 @@ def copy_nginx_logfiles():
 
     # step 1: create all the Logfile entries, with status as 'notcopied'
     dt = datetime.datetime.now()
-    for server in CDNServer.objects.get_servers_by_localtime('15:40'):
+    for server in CDNServer.objects.get_servers_by_localtime('00:15'):
         logfile = Logfile(server=server, status='notcopied', timestamp=CDNServer.objects.localtime_for_timezone(dt, server.timezone))
         logfile.save()
 
