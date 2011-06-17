@@ -187,49 +187,76 @@ def process_transfer_queue():
 
 @task
 def copy_nginx_logfiles():
-    # do one single transfer
+
     import paramiko
     import datetime
-#    host = tq.server.ip_address
-    username = 'vdeliadmin'
-    password = 'vDe11Admin'
     port = 22
-    destination = '/srv/vdeli/cdnmanager/data'
-#    destination = '/home/unit/PROJECTS/vdeli/cdnmanager/data'
-    for srv in CDNServer.objects.all():
-        host = srv.ip_address
-        log_prefix = datetime.datetime.now().strftime('%Y%m%d')
-        filename = '%s.access.log-%s.gz' % (srv.node_name, log_prefix)
-        filepath = '/var/log/nginx/%s' % filename
-        destination = '%s/%s' % (destination, filename)
-        print "Trying to connect to host %s:%d" % (host, port)
+    
+    # the logfiles are copied in a three step process
+
+    # step 1: create all the Logfile entries, with status as 'notcopied'
+    timestamp = datetime.datetime.utcnow().strftime('%Y%m%d')
+    for server in CDNServer.objects.get_servers_by_localtime('00:15'):
+        logfile = Logfile(server=srv, status='notcopied', timestamp=timestamp)
+        logfile.save()
+
+    # step 2: loop over all 'notcopied' logfiles. this will include all
+    # new Logfile entries created in the preceding step, and also any
+    # entries that were created before (either a previous call to 
+    # copy_nginx_logfiles or manually) and that are still 'notcopied'.
+    for logfile in Logfile.objects.filter(status='notcopied'):
+        # retrieve the log file using paramiko
         print "SFTP %s -> %s" % (filepath, './')
         error = None
-        transport = paramiko.Transport((host, port))
+        transport = paramiko.Transport((logfile.server.ip_address, port))
         try:
-            transport.connect(username=username, password=password)
+            transport.connect(username=logfile.server.username, password=logfile.server.password)
             sftp = paramiko.SFTPClient.from_transport(transport)
 
             # Check the remote file exists
             try:
-                sftp.stat(filepath)
+                sftp.stat(logfile.cdnserver_filename())
             except IOError:
                 error = 'Remote file doesn\'t exists'
 
             # Copy a remote file
             try:
-                sftp.get(filepath, destination)
+                # mark the file as being copied
+                logfile.status = 'copying'
+                logfile.save()
+                sftp.get(logfile.cdnserver_filename(), logfile.cdnmanager_filename())
                 sftp.close()
                 transport.close()
             except IOError:
                 error = 'Local path is not a file or connection problem'
         except:
-            error = 'Connection filed'
+            error = 'Connection failed'
         
         if error is not None:
-            print error
-            return False
+            # if the transfer fails, increase retry count, and go to the next file
+            logfile.copy_retry_count += 1
+            logfile.last_error_msg = error
+            logfile.status = 'notcopied'
+            logfile.save()
         else:
-            return True
+            # if the transfer is ok, set status of the logfile as "copied"
+            logfile.status = 'copied'
+            logfile.last_error_msg = ''
+            logfile.save()
 
+    # step 3: loop over all 'copied' logfiles. this will include logfiles
+    # that were copied in step 2 and also any files which were copied before
+    # but still not processed for any reason.
+    for logfile in Logfile.objects.filter(status='copied'):
+        # change the status of the logfile to "filtering"
+        logfile.status = 'filtering'
+        logfile.save()
+
+        # unpack the file, and read it line by line
+
+        # separate lines per each customer (it's the first item on the URL)
+
+        # when finished, set logfile.status = 'completed' or 'ok'
+        logfile.status = 'completed'
+        logfile.save()
 
