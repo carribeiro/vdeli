@@ -300,13 +300,16 @@ class Logfile(models.Model):
     # last_error_msg is a string that can be used to write any message
     # about the last error that happened, for instance: logfile does not
     # exist at the server, sftp timeout, empty file, etc.
-    last_error_msg = models.CharField(max_length=100, default='No Errors')
+    last_error_msg = models.CharField(max_length=100, default='No Errors', null=True)
 
     #timezone = models.IntegerField(_('Time Zone'), default=0)
     copy_retry_count = models.IntegerField(_('Retries Counter'), default=0)
 
+    # Copied file on the cdnmanager
+    logfile = models.CharField(max_length=300, null=True, blank=True)
+
     def filename(self):
-        return '%s.access.log-%s.gz' % (self.node_name, self.timestamp.strftime('%Y%m%d'))
+        return '%s.access.log-%s.gz' % (self.server.node_name, self.timestamp.strftime('%Y%m%d'))
 
     def cdnserver_filename(self):
         return '/var/log/nginx/%s' % self.filename()
