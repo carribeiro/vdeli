@@ -1,13 +1,19 @@
 # code to run a task with a lock from inside django. copied from:
 # http://docs.celeryproject.org/en/v2.2.5/cookbook/tasks.html#ensuring-a-task-is-only-executed-one-at-a-time
 
+import paramiko
+import datetime
+import os.path
+
+from celery.decorators import periodic_task
 from celery.task import Task, task
+from django.contrib.auth.models import User
 from django.core.cache import cache
 from django.utils.hashcompat import md5_constructor as md5
-from models import VideoFile, TransferQueue
-from django.contrib.auth.models import User
-from videorepo.models import CDNServer, Logfile
 from paramiko.ssh_exception import SSHException
+from videorepo.models import CDNServer, Logfile
+from videorepo.models import VideoFile, TransferQueue
+
 
 LOCK_EXPIRE = 60 * 5 # Lock expires in 5 minutes
 
@@ -111,88 +117,164 @@ class VideoFileImporter(Task):
                 video_file_name))
         return
 
-#@task(name="videofile.transfer_one_file")
-import datetime
-from celery.decorators import periodic_task
+def transfer_callback(bytes_transferred, bytes_total, tq):
+    try:
+        tq.percentage_transferred = int((100.0 * bytes_transferred) / bytes_total)
+    except:
+        tq.percentage_transferred = 0
+    tq.save()
+
 @periodic_task(run_every=datetime.timedelta(minutes=1), name="videofile.transfer_one_file")
 def process_transfer_queue():
-    from videorepo.models import VideoFile, TransferQueue
 
-    # get the first entry on the transfer queue and handle it
-    try:
-        tq = TransferQueue.objects.filter(transfer_status='not scheduled')[0]
-    except:
-        return "no transfer to be done"
+#    # get the first entry on the transfer queue and handle it
+#    try:
+#        tq = TransferQueue.objects.filter(transfer_status='not scheduled')[0]
+#    except:
+#        return "no transfer to be done"
 
-    # do one single transfer
-    import paramiko
-    host = tq.server.ip_address
-    username = 'vdeliadmin'
-    password = 'vDe11Admin'
-    port = 22
-    source = str(tq.video_file.file_name)
+#     do one single transfer
 
-    import os.path
-    path, file_name = os.path.split(source)
-    path, project = os.path.split(path)
-    user_dir = os.path.join("/srv/vdeli/cdnserver/data", tq.video_file.project.user.username)
-    project_dir = os.path.join(user_dir, project)
-    destination = os.path.join(project_dir, file_name)
-
-    print "Trying to connect to host %s:%d" % (host, port)
-    print "SFTP %s -> %s" % (source, destination)
-    error = 'unknown error'
-    try:
-        transport = paramiko.Transport((host, port))
+    for tq in TransferQueue.objects.filter(transfer_status='not scheduled'):
+        source = str(tq.video_file.file_name)
+    
+        path, file_name = os.path.split(source)
+        path, project = os.path.split(path)
+        user_dir = os.path.join("/srv/vdeli/cdnserver/data", tq.video_file.project.user.username)
+        project_dir = os.path.join(user_dir, project)
+        destination = os.path.join(project_dir, file_name)
+    
+        print "Trying to connect to host %s:%d" % (tq.server.ip_address, tq.server.port)
+        error = None
         try:
-            transport.connect(username=username, password=password)
-            sftp = paramiko.SFTPClient.from_transport(transport)
+            transport = paramiko.Transport((tq.server.ip_address, tq.server.port))
             try:
-                try:
-                    print "mkdir %s" % user_dir, sftp.mkdir(user_dir)
-                except:
-                    pass
-                try:
-                    print "mkdir %s" % project_dir, sftp.mkdir(project_dir)
-                except:
-                    pass
-                try:
+                transport.connect(username=tq.server.username, password=tq.server.password)
+                sftp = paramiko.SFTPClient.from_transport(transport)
 
-                    def transfer_callback(bytes_transferred, bytes_total, tq=tq):
+                # Check base dirs
+                if not 'vdeli' in sftp.listdir('/srv'):
+                    prj_path = '/srv'
+                    for dir in ['vdeli', 'cdnserver', 'data']:
+                        prj_path = '%s/%s' % (prj_path, dir)
                         try:
-                            tq.percentage_transferred = int((100.0 * bytes_transferred) / bytes_total)
-                        except:
-                            tq.percentage_transferred = 0
-                        tq.save()
+                            sftp.mkdir(prj_path)
+                        except IOError:
+                            error = 'Can\'t create project dirs. Permission denied.' 
+                elif not 'cdnserver' in sftp.listdir('/srv/vdeli'):
+                    prj_path = '/srv/vdeli'
+                    for dir in ['cdnserver', 'data']:
+                        prj_path = '%s/%s' % (prj_path, dir)
+                        try:
+                            sftp.mkdir(prj_path)
+                        except IOError:
+                            error = 'Can\'t create project dirs. Permission denied.'
+                elif not 'data' in sftp.listdir('/srv/vdeli/cdnserver'):
+                    try:
+                        sftp.mkdir('/srv/vdeli/cdnserver/data')
+                    except IOError:
+                        error = 'Can\'t create project dirs. Permission denied.'
 
-                    print "sftp" % sftp.put(source, destination, callback=transfer_callback)
-                except:
-                    pass
+                if not tq.video_file.project.user.username in sftp.listdir('/srv/vdeli/cdnserver/data'):
+                    try:
+                        sftp.mkdir(user_dir)
+                    except IOError:
+                        error = 'Can\'t create project dirs. Permission denied.'
+
+                elif not project in sftp.listdir(user_dir):
+                    try:
+                        sftp.mkdir(project_dir)
+                    except IOError:
+                        error = 'Can\'t create project dirs. Permission denied.'
+
+                if error is None:
+
+                # Check the remote file exists
+                try:
+                    sftp.stat(logfile.cdnserver_filename())
+                except IOError:
+                    error = 'Remote file doesn\'t exists'
+    
+                # Copy a remote file
+                if error is None:
+                    try:
+                        # mark the file as being copied
+                        logfile.status = 'copying'
+                        if cdnmanager_logfiles_path is None:
+                            local_path = logfile.cdnmanager_filename()
+                        else:
+                            local_path = '%s/%s' % (cdnmanager_logfiles_path, logfile.cdnmanager_filename().split('/')[-1])
+                        print "SFTP %s -> %s" % (logfile.cdnserver_filename(), local_path)
+                        sftp.get(logfile.cdnserver_filename(), local_path)
+                        print 'File %s copied!' % logfile.cdnserver_filename()
+                        sftp.close()
+                        transport.close()
+                        logfile.logfile = local_path
+                        logfile.save()
+                    except IOError:
+                        error = 'Local path is not a file or connection problem'
             except:
-                error = 'SFTP put failed'
-            finally:
-                sftp.close()
-        except:
-            error = 'connect failed'
-        finally:
-            transport.close()
-        tq.transfer_status = 'transferred'
-        tq.save()
-    except:
-        tq.transfer_status = error
-        tq.save()
+                error = 'Connection failed'
 
-    #ssh = paramiko.SSHClient()
-    #ssh.connect(server.ip_address, username=username, password=password)
-    #ssh_stdin, ssh_stdout, ssh_stderr = ssh_session.exec_command("ftpget ")
+        except SSHException:
+            error = 'No route to host %s' % tq.server.ip_address
+        
+        if error is not None:
+            # if the transfer fails, increase retry count, and go to the next file
+            logfile.copy_retry_count += 1
+            logfile.last_error_msg = error
+            logfile.status = 'notcopied'
+            logfile.save()
+        else:
+            # if the transfer is ok, set status of the logfile as "copied"
+            logfile.status = 'copied'
+            logfile.last_error_msg = None
+            logfile.save()
+
+#        print "SFTP %s -> %s" % (source, destination)
+#        error = 'unknown error'
+#        try:
+#            transport = paramiko.Transport((host, port))
+#            try:
+#                transport.connect(username=username, password=password)
+#                sftp = paramiko.SFTPClient.from_transport(transport)
+#                try:
+#                    try:
+#                        print "mkdir %s" % user_dir, sftp.mkdir(user_dir)
+#                    except:
+#                        pass
+#                    try:
+#                        print "mkdir %s" % project_dir, sftp.mkdir(project_dir)
+#                    except:
+#                        pass
+#                    try:
+#    
+
+#    
+#                        print "sftp" % sftp.put(source, destination, callback=transfer_callback)
+#                    except:
+#                        pass
+#                except:
+#                    error = 'SFTP put failed'
+#                finally:
+#                    sftp.close()
+#            except:
+#                error = 'connect failed'
+#            finally:
+#                transport.close()
+#            tq.transfer_status = 'transferred'
+#            tq.save()
+#        except:
+#            tq.transfer_status = error
+#            tq.save()
+    
+        #ssh = paramiko.SSHClient()
+        #ssh.connect(server.ip_address, username=username, password=password)
+        #ssh_stdin, ssh_stdout, ssh_stderr = ssh_session.exec_command("ftpget ")
 
 @task
 def copy_nginx_logfiles(local_time='00:15', cdnmanager_logfiles_path=None):
-
-    import paramiko
-    import datetime
     port = 22
-    
     # the logfiles are copied in a three step process
 
     # step 1: create all the Logfile entries, with status as 'notcopied'
