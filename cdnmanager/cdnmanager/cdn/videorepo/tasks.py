@@ -117,12 +117,16 @@ class VideoFileImporter(Task):
                 video_file_name))
         return
 
-def transfer_callback(bytes_transferred, bytes_total, tq):
-    try:
-        tq.percentage_transferred = int((100.0 * bytes_transferred) / bytes_total)
-    except:
-        tq.percentage_transferred = 0
-    tq.save()
+class TransferQueueCallBack(object):
+    def __init__(self, tq):
+        self.tq = tq
+
+    def transfer_callback(self, bytes_transferred, bytes_total):
+        try:
+            self.tq.percentage_transferred = int((100.0 * bytes_transferred) / bytes_total)
+        except:
+            self.tq.percentage_transferred = 0
+        self.tq.save()
 
 @periodic_task(run_every=datetime.timedelta(minutes=1), name="videofile.transfer_one_file")
 def process_transfer_queue():
@@ -135,101 +139,83 @@ def process_transfer_queue():
 
 #     do one single transfer
 
-    for tq in TransferQueue.objects.filter(transfer_status='not scheduled'):
+    for tq in TransferQueue.objects.filter(transfer_status='not scheduled')[0]:
         source = str(tq.video_file.file_name)
-    
+        tq.transfer_status='processing'
+        tq.save()
         path, file_name = os.path.split(source)
         path, project = os.path.split(path)
         user_dir = os.path.join("/srv/vdeli/cdnserver/data", tq.video_file.project.user.username)
         project_dir = os.path.join(user_dir, project)
         destination = os.path.join(project_dir, file_name)
     
-        print "Trying to connect to host %s:%d" % (tq.server.ip_address, tq.server.port)
+        print "Trying to connect to the host %s:%d" % (tq.server.ip_address, tq.server.server_port)
         error = None
         try:
-            transport = paramiko.Transport((tq.server.ip_address, tq.server.port))
-            try:
-                transport.connect(username=tq.server.username, password=tq.server.password)
-                sftp = paramiko.SFTPClient.from_transport(transport)
+            transport = paramiko.Transport((tq.server.ip_address, tq.server.server_port))
+            transport.connect(username=tq.server.username, password=tq.server.password)
+            sftp = paramiko.SFTPClient.from_transport(transport)
 
-                # Check base dirs
+            # Check base dirs
+            try:
                 if not 'vdeli' in sftp.listdir('/srv'):
+                    print 'Not vdeli'
                     prj_path = '/srv'
                     for dir in ['vdeli', 'cdnserver', 'data']:
                         prj_path = '%s/%s' % (prj_path, dir)
                         try:
                             sftp.mkdir(prj_path)
                         except IOError:
-                            error = 'Can\'t create project dirs. Permission denied.' 
-                elif not 'cdnserver' in sftp.listdir('/srv/vdeli'):
+                            error = 'Can\'t create project dirs: %s. Permission denied.' % \
+                            prj_path
+                            break
+                if not 'cdnserver' in sftp.listdir('/srv/vdeli'):
                     prj_path = '/srv/vdeli'
                     for dir in ['cdnserver', 'data']:
                         prj_path = '%s/%s' % (prj_path, dir)
                         try:
                             sftp.mkdir(prj_path)
                         except IOError:
-                            error = 'Can\'t create project dirs. Permission denied.'
-                elif not 'data' in sftp.listdir('/srv/vdeli/cdnserver'):
+                            error = 'Can\'t create project dirs: %s. Permission denied.' % \
+                            prj_path
+                            break
+                if not 'data' in sftp.listdir('/srv/vdeli/cdnserver'):
                     try:
                         sftp.mkdir('/srv/vdeli/cdnserver/data')
                     except IOError:
-                        error = 'Can\'t create project dirs. Permission denied.'
-
+                        error = 'Can\'t create project dirs: %s. Permission denied.' % \
+                            '/srv/vdeli/cdnserver/data'
+    
                 if not tq.video_file.project.user.username in sftp.listdir('/srv/vdeli/cdnserver/data'):
                     try:
                         sftp.mkdir(user_dir)
                     except IOError:
-                        error = 'Can\'t create project dirs. Permission denied.'
-
-                elif not project in sftp.listdir(user_dir):
+                        error = 'Can\'t create project dirs: %s. Permission denied.' % \
+                            user_dir
+    
+                if not project in sftp.listdir(user_dir):
                     try:
                         sftp.mkdir(project_dir)
                     except IOError:
-                        error = 'Can\'t create project dirs. Permission denied.'
-
+                        error = 'Can\'t create project dirs: %s. Permission denied.' % \
+                            project_dir
+            except IOError:
                 if error is None:
-
-                # Check the remote file exists
-                try:
-                    sftp.stat(logfile.cdnserver_filename())
-                except IOError:
-                    error = 'Remote file doesn\'t exists'
-    
-                # Copy a remote file
-                if error is None:
-                    try:
-                        # mark the file as being copied
-                        logfile.status = 'copying'
-                        if cdnmanager_logfiles_path is None:
-                            local_path = logfile.cdnmanager_filename()
-                        else:
-                            local_path = '%s/%s' % (cdnmanager_logfiles_path, logfile.cdnmanager_filename().split('/')[-1])
-                        print "SFTP %s -> %s" % (logfile.cdnserver_filename(), local_path)
-                        sftp.get(logfile.cdnserver_filename(), local_path)
-                        print 'File %s copied!' % logfile.cdnserver_filename()
-                        sftp.close()
-                        transport.close()
-                        logfile.logfile = local_path
-                        logfile.save()
-                    except IOError:
-                        error = 'Local path is not a file or connection problem'
-            except:
-                error = 'Connection failed'
+                    error = 'IOError'
 
         except SSHException:
             error = 'No route to host %s' % tq.server.ip_address
-        
-        if error is not None:
-            # if the transfer fails, increase retry count, and go to the next file
-            logfile.copy_retry_count += 1
-            logfile.last_error_msg = error
-            logfile.status = 'notcopied'
-            logfile.save()
+        if error is None:
+            print "Copying file %s to the %s" % (source, destination)
+            tq_call_back = TransferQueueCallBack(tq)
+            sftp.put(source, destination, callback=tq_call_back.transfer_callback)
+            sftp.close()
+            tq.transfer_status = 'transferred'
         else:
-            # if the transfer is ok, set status of the logfile as "copied"
-            logfile.status = 'copied'
-            logfile.last_error_msg = None
-            logfile.save()
+            tq.transfer_status = 'failed'
+            tq.last_error_msg = error
+        transport.close()
+        tq.save()
 
 #        print "SFTP %s -> %s" % (source, destination)
 #        error = 'unknown error'
