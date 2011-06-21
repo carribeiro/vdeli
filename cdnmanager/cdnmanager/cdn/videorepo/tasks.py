@@ -131,14 +131,6 @@ class TransferQueueCallBack(object):
 @periodic_task(run_every=datetime.timedelta(minutes=1), name="videofile.transfer_one_file")
 def process_transfer_queue():
 
-#    # get the first entry on the transfer queue and handle it
-#    try:
-#        tq = TransferQueue.objects.filter(transfer_status='not scheduled')[0]
-#    except:
-#        return "no transfer to be done"
-
-#     do one single transfer
-
     for tq in TransferQueue.objects.filter(transfer_status='not scheduled')[0]:
         source = str(tq.video_file.file_name)
         tq.transfer_status='processing'
@@ -216,47 +208,6 @@ def process_transfer_queue():
             tq.last_error_msg = error
         transport.close()
         tq.save()
-
-#        print "SFTP %s -> %s" % (source, destination)
-#        error = 'unknown error'
-#        try:
-#            transport = paramiko.Transport((host, port))
-#            try:
-#                transport.connect(username=username, password=password)
-#                sftp = paramiko.SFTPClient.from_transport(transport)
-#                try:
-#                    try:
-#                        print "mkdir %s" % user_dir, sftp.mkdir(user_dir)
-#                    except:
-#                        pass
-#                    try:
-#                        print "mkdir %s" % project_dir, sftp.mkdir(project_dir)
-#                    except:
-#                        pass
-#                    try:
-#    
-
-#    
-#                        print "sftp" % sftp.put(source, destination, callback=transfer_callback)
-#                    except:
-#                        pass
-#                except:
-#                    error = 'SFTP put failed'
-#                finally:
-#                    sftp.close()
-#            except:
-#                error = 'connect failed'
-#            finally:
-#                transport.close()
-#            tq.transfer_status = 'transferred'
-#            tq.save()
-#        except:
-#            tq.transfer_status = error
-#            tq.save()
-    
-        #ssh = paramiko.SSHClient()
-        #ssh.connect(server.ip_address, username=username, password=password)
-        #ssh_stdin, ssh_stdout, ssh_stderr = ssh_session.exec_command("ftpget ")
 
 @task
 def copy_nginx_logfiles(local_time='00:15', cdnmanager_logfiles_path=None):
