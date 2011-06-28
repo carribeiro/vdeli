@@ -13,6 +13,7 @@ from django.utils.hashcompat import md5_constructor as md5
 from paramiko.ssh_exception import SSHException
 from videorepo.models import CDNServer, Logfile
 from videorepo.models import VideoFile, TransferQueue
+import gzip
 
 
 LOCK_EXPIRE = 60 * 5 # Lock expires in 5 minutes
@@ -131,7 +132,9 @@ class TransferQueueCallBack(object):
 @periodic_task(run_every=datetime.timedelta(minutes=1), name="videofile.transfer_one_file")
 def process_transfer_queue():
 
-    for tq in TransferQueue.objects.filter(transfer_status='not scheduled')[0]:
+    queue = TransferQueue.objects.filter(transfer_status='not scheduled')
+    if queue.count() > 0:
+        tq = queue[0]
         source = str(tq.video_file.file_name)
         tq.transfer_status='processing'
         tq.save()
@@ -147,7 +150,7 @@ def process_transfer_queue():
             transport = paramiko.Transport((tq.server.ip_address, tq.server.server_port))
             transport.connect(username=tq.server.username, password=tq.server.password)
             sftp = paramiko.SFTPClient.from_transport(transport)
-
+    
             # Check base dirs
             try:
                 if not 'vdeli' in sftp.listdir('/srv'):
@@ -194,7 +197,7 @@ def process_transfer_queue():
             except IOError:
                 if error is None:
                     error = 'IOError'
-
+    
         except SSHException:
             error = 'No route to host %s' % tq.server.ip_address
         if error is None:
@@ -217,8 +220,11 @@ def copy_nginx_logfiles(local_time='00:15', cdnmanager_logfiles_path=None):
     # step 1: create all the Logfile entries, with status as 'notcopied'
     dt = datetime.datetime.now()
     for server in CDNServer.objects.get_servers_by_localtime(local_time):
-        logfile = Logfile(server=server, status='notcopied', timestamp=CDNServer.objects.localtime_for_timezone(dt, server.timezone))
-        logfile.save()
+        try:
+            Logfile.objects.get(server=server, status='copied', timestamp=CDNServer.objects.localtime_for_timezone(dt, server.timezone))
+        except Logfile.DoesNotExist:
+            logfile = Logfile(server=server, status='notcopied', timestamp=CDNServer.objects.localtime_for_timezone(dt, server.timezone))
+            logfile.save()
 
     # step 2: loop over all 'notcopied' logfiles. this will include all
     # new Logfile entries created in the preceding step, and also any
@@ -280,9 +286,26 @@ def copy_nginx_logfiles(local_time='00:15', cdnmanager_logfiles_path=None):
     # but still not processed for any reason.
     for logfile in Logfile.objects.filter(status='copied'):
         # change the status of the logfile to "filtering"
-        #logfile.status = 'filtering'
-        #logfile.save()
-        pass
+        logfile.status = 'filtering'
+        logfile.save()
+        if os.path.exists(logfile.logfile):
+            f = gzip.open(logfile.logfile, 'rb')
+            for line in f.readlines():
+                # the example of the lines from logfile:
+                # 10.7.1.1 - - [28/Jun/2011:14:48:27 +0400] "GET /unit/videoshows/blok_web_lo.wmv HTTP/1.1" 200 917703 "-" "Mozilla/5.0 (X11; Linux i686; rv:5.0) Gecko/20100101 Firefox/5.0"
+                # m = re.match(r'(\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b) - - (\[.+\]) (\".+\") (\d+) (\d+)', line)
+                # m.group(0) - client ip
+                # m.group(1) - access time
+                # m.group(2) - request + path to the file
+                # m.group(3) - status code
+                # m.group(4) - file size
+
+                pass
+            f.close()
+        else:
+            logfile.status = 'copied'
+            logfile.last_error_msg = 'Logfile path %s doesn\'t exists on the server'
+            logfile.save()
 
         # unpack the file, and read it line by line
 
