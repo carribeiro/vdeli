@@ -14,6 +14,7 @@ from paramiko.ssh_exception import SSHException
 from videorepo.models import CDNServer, Logfile
 from videorepo.models import VideoFile, TransferQueue
 import gzip
+import re
 
 
 LOCK_EXPIRE = 60 * 5 # Lock expires in 5 minutes
@@ -146,6 +147,7 @@ def process_transfer_queue():
     
         print "Trying to connect to the host %s:%d" % (tq.server.ip_address, tq.server.server_port)
         error = None
+        transport = None
         try:
             transport = paramiko.Transport((tq.server.ip_address, tq.server.server_port))
             transport.connect(username=tq.server.username, password=tq.server.password)
@@ -209,7 +211,8 @@ def process_transfer_queue():
         else:
             tq.transfer_status = 'failed'
             tq.last_error_msg = error
-        transport.close()
+        if transport is not None:
+            transport.close()
         tq.save()
 
 @task
@@ -230,7 +233,7 @@ def copy_nginx_logfiles(local_time='00:15', cdnmanager_logfiles_path=None):
     # new Logfile entries created in the preceding step, and also any
     # entries that were created before (either a previous call to 
     # copy_nginx_logfiles or manually) and that are still 'notcopied'.
-    for logfile in Logfile.objects.filter(status='notcopied'):
+    for logfile in Logfile.objects.filter(status='notcopied', copy_retry_count__lte=3):
         # retrieve the log file using paramiko
         error = None
         try:
@@ -290,6 +293,9 @@ def copy_nginx_logfiles(local_time='00:15', cdnmanager_logfiles_path=None):
         logfile.save()
         if os.path.exists(logfile.logfile):
             f = gzip.open(logfile.logfile, 'rb')
+            # Cache of opened files (customers log files)
+            # TODO: If we will have a lot of customers we need to take care about os limits on open files
+            cache_files = {}
             for line in f.readlines():
                 # the example of the lines from logfile:
                 # 10.7.1.1 - - [28/Jun/2011:14:48:27 +0400] "GET /unit/videoshows/blok_web_lo.wmv HTTP/1.1" 200 917703 "-" "Mozilla/5.0 (X11; Linux i686; rv:5.0) Gecko/20100101 Firefox/5.0"
@@ -299,9 +305,61 @@ def copy_nginx_logfiles(local_time='00:15', cdnmanager_logfiles_path=None):
                 # m.group(2) - request + path to the file
                 # m.group(3) - status code
                 # m.group(4) - file size
+                m = re.match(r'(\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b) - - (\[.+\]) (\".+\") (\d+) (\d+)', line)
+                request = None
+                try:
+                    request = m.groups()[2]
+                except IndexError:
+                    pass
+                
+                customer = None
+                if request:
+                    path_list = request.split(' ')[1].split('/')
+                    if path_list[1] != '':
+                        customer = path_list[1]
 
-                pass
+                user = None
+                if customer:
+                    try:
+                        # TODO: We need to cache ORM results, because we will have a lot of lines and requests 
+                        user = User.objects.get(username=customer)
+                    except User.DoesNotExist:
+                        pass
+
+                if user:
+                    # check if we already have opened log
+                    if cache_files.has_key(user.username):
+                        customer_log = cache_files[user.username]
+                    # create a new one
+                    else:
+                        file_date = f.name.replace('.gz', '').split('.log-')[1]
+                        if cdnmanager_logfiles_path is None:
+                            base_local_path = '%s/customer_log' % '/'.join(logfile.cdnmanager_filename().split('/')[:-2])
+                        else:
+                            base_local_path = '%s/customer_log' % '/'.join(cdnmanager_logfiles_path.split('/')[:-1])
+                        customer_path = '%s/%s' % (base_local_path, customer)
+                        # Check path's
+                        if not os.path.exists(base_local_path):
+                            os.mkdir(base_local_path)
+                            os.mkdir(customer_path)
+                        if not os.path.exists(customer_path):
+                            os.mkdir(customer_path)
+
+                        new_file_path = '%s/%s-%s.log' % (customer_path, customer, file_date)
+                        new_file = open(new_file_path, 'w')
+                        new_file.close()
+                        customer_log = open(new_file_path, 'a')
+                        cache_files[customer] = customer_log
+                    # append line to the file
+                    customer_log.write(line)
             f.close()
+            # Close all opened files
+            for k in cache_files.keys():
+                cache_files[k].close()
+            # Change status
+            logfile.status = 'completed'
+            logfile.save()
+
         else:
             logfile.status = 'copied'
             logfile.last_error_msg = 'Logfile path %s doesn\'t exists on the server'

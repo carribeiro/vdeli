@@ -296,12 +296,12 @@ class Logfile(models.Model):
     creation_time = models.DateTimeField(_('Creation Time'), auto_now=True)
 
     # log the date&time when the filecopy was finished
-    copy_time = models.DateTimeField(_('Copy Time'), null=True)
+    copy_time = models.DateTimeField(_('Copy Time'), null=True, blank=True)
 
     # last_error_msg is a string that can be used to write any message
     # about the last error that happened, for instance: logfile does not
     # exist at the server, sftp timeout, empty file, etc.
-    last_error_msg = models.CharField(max_length=100, default='No Errors', null=True)
+    last_error_msg = models.CharField(max_length=100, default='No Errors', null=True, blank=True)
 
     #timezone = models.IntegerField(_('Time Zone'), default=0)
     copy_retry_count = models.IntegerField(_('Retries Counter'), default=0)
