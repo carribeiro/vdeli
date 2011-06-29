@@ -210,17 +210,17 @@ def update(update_requirements=False, syncdb=False):
         sudo('git checkout .', user=env.user)
         sudo('git pull', user=env.user)
 
-    with virtualenv():
-        with cd('%(project_path)s/cdnmanager/cdnmanager/cdn' % env):
-            sudo('./manage.py collectstatic -v0 --noinput', user=env.user)
-
     if update_requirements:
         with virtualenv():
             sudo('pip install -U -r %(project_path)s/cdnmanager/requirements.txt' % env, user=env.user)
 
+    with virtualenv():
+        with cd('%(project_path)s/cdnmanager/cdnmanager/cdn' % env):
+            sudo('./manage.py collectstatic -v0 --noinput', user=env.user)
+
     if syncdb:
         with virtualenv():
-            run('python %(project_path)s/cdnmanager/cdnmanager/cdn/manage.py syncdb --no-initial-data' % env)
+            run('python %(project_path)s/cdnmanager/cdnmanager/cdn/manage.py syncdb' % env)
             run('python %(project_path)s/cdnmanager/cdnmanager/cdn/manage.py migrate --all --no-initial-data' % env)
 
     configure_wsgi_script()
