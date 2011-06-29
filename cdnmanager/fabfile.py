@@ -220,6 +220,7 @@ def update(update_requirements=False, syncdb=False):
 
     if syncdb:
         with virtualenv():
+            run('python %(project_path)s/cdnmanager/cdnmanager/cdn/manage.py syncdb --no-initial-data' % env)
             run('python %(project_path)s/cdnmanager/cdnmanager/cdn/manage.py migrate --all --no-initial-data' % env)
 
     configure_wsgi_script()
