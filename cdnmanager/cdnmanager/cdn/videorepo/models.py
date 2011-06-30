@@ -318,3 +318,15 @@ class Logfile(models.Model):
     def cdnmanager_filename(self):
         basedir = '/srv/vdeli/cdnmanager/data'
         return '%s/%s' % (basedir, self.filename())
+
+class CustomerLogfile(models.Model):
+    '''
+    This is model uses to allow customers to download their filtered data
+    '''
+    customer = models.ForeignKey(User)
+    fpath = models.CharField(max_length=360)
+    creation_time = models.DateTimeField(_('Creation Time'), auto_now=True)
+
+    def __unicode__(self):
+        return self.fpath
+
