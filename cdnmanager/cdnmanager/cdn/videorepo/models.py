@@ -325,8 +325,18 @@ class CustomerLogfile(models.Model):
     '''
     customer = models.ForeignKey(User)
     fpath = models.CharField(max_length=360)
+    filename = models.CharField(max_length=150, null=True, blank=True)
+    size = models.BigIntegerField(null=True, blank=True)
     creation_time = models.DateTimeField(_('Creation Time'), auto_now=True)
 
     def __unicode__(self):
         return self.fpath
+
+    def save(self, *args, **kwargs):
+        if not os.path.exists(self.fpath):
+            raise Exception('Logfile does not exists')
+        else:
+            self.filename = self.fpath.split('/')[-1]
+            self.size = os.path.getsize(self.fpath)
+            super(CustomerLogfile, self).save(*args, **kwargs)
 

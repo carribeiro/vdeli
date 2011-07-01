@@ -14,9 +14,11 @@ from celery.execute import send_task
 
 from forms import MainForm
 from videorepo.forms import VideoProjectForm, ProjectPolicyFormSet, PolicyProjectForm
-from videorepo.models import VideoProject, TransferQueue
+from videorepo.models import VideoProject, TransferQueue, CustomerLogfile
 from django.core.urlresolvers import reverse
 from django.core.paginator import Paginator, EmptyPage, InvalidPage
+import StringIO
+from django.core.servers.basehttp import FileWrapper
 
 def user_login(request):
     if request.method == 'POST':
@@ -191,3 +193,33 @@ def dynamic_transfer_queue(request):
     return render_to_response('dynamic_transfer_queue.html', {
         'queue': queue,
     }, context_instance=RequestContext(request))
+
+@login_required
+def customer_logfiles_list(request):
+    files_list = CustomerLogfile.objects.filter(customer=request.user)
+
+    p = Paginator(files_list, 10)
+
+    try:
+        page = int(request.GET.get('page', 1))
+    except ValueError:
+        page = 1
+
+    try:
+        flist = p.page(page)
+    except (EmptyPage, InvalidPage):
+        flist = p.page(p.num_pages)
+
+    return render_to_response('customer_logfiles_list.html',
+                              {'flist': flist},
+                              context_instance=RequestContext(request))
+
+@login_required
+def download_logfile(request, filename=None):
+    logfile = get_object_or_404(CustomerLogfile, filename=filename)
+    lfile = open(logfile.fpath, 'r')
+    response = HttpResponse(FileWrapper(lfile), content_type='application/text')
+    response['Content-Disposition'] = 'attachment; filename=%s' % logfile.filename
+    response['Content-Length'] = logfile.size
+    
+    return response

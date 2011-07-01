@@ -1,0 +1,36 @@
+{% extends "baseapp.html" %}
+
+{% block baseapp %}
+
+<table id="customer_logfiles_list">
+        <tr>
+            <td>File Name</td>
+            <td>Date Added</td>
+            <td>File Size</td>
+        </tr>
+    {% for logfile in flist.object_list %}
+        <tr id="file-{{ logfile.id }}">
+            <td><a href="{% url customer_logfile logfile.filename %}">{{ logfile.filename }}</a></td>
+            <td>{{ logfile.creation_time }}</td>
+            <td>{{ logfile.size }} bytes</td>
+        </tr>
+    {% endfor %}
+</table>
+
+<div class="pagination">
+    <span class="step-links">
+        {% if flist.has_previous %}
+            <a href="?page={{ flist.previous_page_number }}">previous</a>
+        {% endif %}
+
+        <span class="current">
+            Page <span id="page_number">{{ flist.number }}</span> of {{ flist.paginator.num_pages }}.
+        </span>
+
+        {% if flist.has_next %}
+            <a href="?page={{ flist.next_page_number }}">next</a>
+        {% endif %}
+    </span>
+</div>
+
+{% endblock %}

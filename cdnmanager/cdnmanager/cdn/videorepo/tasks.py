@@ -11,7 +11,7 @@ from django.contrib.auth.models import User
 from django.core.cache import cache
 from django.utils.hashcompat import md5_constructor as md5
 from paramiko.ssh_exception import SSHException
-from videorepo.models import CDNServer, Logfile
+from videorepo.models import CDNServer, Logfile, CustomerLogfile
 from videorepo.models import VideoFile, TransferQueue
 import gzip
 import re
@@ -294,7 +294,7 @@ def copy_nginx_logfiles(local_time='00:15', cdnmanager_logfiles_path=None):
         if os.path.exists(logfile.logfile):
             f = gzip.open(logfile.logfile, 'rb')
             # Cache of opened files (customers log files)
-            # TODO: If we will have a lot of customers we need to take care about os limits on open files
+            # TODO: If we will have a lot of customers we need to take care about os limits on file descriptors (fs.file-max)
             cache_files = {}
             for line in f.readlines():
                 # the example of the lines from logfile:
@@ -353,9 +353,16 @@ def copy_nginx_logfiles(local_time='00:15', cdnmanager_logfiles_path=None):
                     # append line to the file
                     customer_log.write(line)
             f.close()
-            # Close all opened files
+            # Close all opened files and create CustomerLogfile objects
             for k in cache_files.keys():
                 cache_files[k].close()
+                try:
+                    user = User.objects.get(username=k)
+                except User.DoesNotExist:
+                    user = None
+                if user:
+                    cl = CustomerLogfile(customer=user, fpath=cache_files[k].name)
+                    cl.save()
             # Change status
             logfile.status = 'completed'
             logfile.save()

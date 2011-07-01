@@ -36,6 +36,10 @@ urlpatterns = patterns('',
     url(r'^$', 'videorepo.views.main', name='main_page'),
     url(r'^projects/add/$', 'videorepo.views.add_project', name='add_project'),
 
+    # Customer logfiles
+    url(r'^logfiles/$', 'videorepo.views.customer_logfiles_list', name='customer_logfiles_list'),
+    url(r'^logfiles/download/([^/]*)$', 'videorepo.views.download_logfile', name='customer_logfile'),
+
     # API
     (r'^api/', include('api.urls')),
 

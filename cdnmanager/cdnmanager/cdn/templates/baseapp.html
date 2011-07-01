@@ -12,6 +12,7 @@
         {% if request.user.is_authenticated %}
             <div id="userinfo" style="text-align:right">
                 <a href="/accounts/{{ request.user.username }}">{{ request.user.username }}</a> |
+                <a href="{% url customer_logfiles_list %}">logfiles</a> |
                 <a href="/accounts/logout/">log out</a>
             </div>
         {% else %}
