@@ -19,6 +19,8 @@ from django.core.urlresolvers import reverse
 from django.core.paginator import Paginator, EmptyPage, InvalidPage
 import StringIO
 from django.core.servers.basehttp import FileWrapper
+import tempfile
+import zipfile
 
 def user_login(request):
     if request.method == 'POST':
@@ -216,10 +218,30 @@ def customer_logfiles_list(request):
 
 @login_required
 def download_logfile(request, filename=None):
-    logfile = get_object_or_404(CustomerLogfile, filename=filename)
-    lfile = open(logfile.fpath, 'r')
-    response = HttpResponse(FileWrapper(lfile), content_type='application/text')
-    response['Content-Disposition'] = 'attachment; filename=%s' % logfile.filename
-    response['Content-Length'] = logfile.size
+    logfile = get_object_or_404(CustomerLogfile, filename=filename, customer=request.user)
+    temp = tempfile.TemporaryFile()
+    archive = zipfile.ZipFile(temp, 'w', zipfile.ZIP_DEFLATED)
+    archive.write(logfile.fpath, logfile.filename)
+    archive.close()
+    wrapper = FileWrapper(temp)
+    response = HttpResponse(wrapper, content_type='application/zip')
+    response['Content-Disposition'] = 'attachment; filename=%s.zip' % logfile.filename.replace('.log','')
+    response['Content-Length'] = temp.tell()
+    temp.seek(0)
     
+    return response
+
+@login_required
+def download_all_logfiles(request):
+    filelist = CustomerLogfile.objects.filter(customer=request.user)
+    temp = tempfile.TemporaryFile()
+    archive = zipfile.ZipFile(temp, 'w', zipfile.ZIP_DEFLATED)
+    for logfile in filelist:
+        archive.write(logfile.fpath, logfile.filename)
+    archive.close()
+    wrapper = FileWrapper(temp)
+    response = HttpResponse(wrapper, content_type='application/zip')
+    response['Content-Disposition'] = 'attachment; filename=%s-logfiles.zip' % request.user
+    response['Content-Length'] = temp.tell()
+    temp.seek(0)
     return response
